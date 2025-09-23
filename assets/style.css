@@ -5,14 +5,15 @@ html, body {
 }
 
 body {
-  height: 100vh;
+  min-height: 100vh;
   font-family: system-ui, sans-serif;
   margin: 0;
   background: linear-gradient(120deg, #f8fafc 70%, #e7eaf2 100%);
   color: #222;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 header {
@@ -38,7 +39,7 @@ main {
   justify-content: center;
   min-height: 65vh;
   position: relative;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 footer {
@@ -60,3 +61,125 @@ footer {
   }
 
 }
+
+/* UI additions */
+h1 { font-size: 1.8rem; }
+h2 { font-size: 1.2rem; margin: 1.6rem 0 0.8rem; }
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+button {
+  appearance: none;
+  border: 0;
+  background: #e8ecf7;
+  color: #222;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+button:hover { background: #dfe4f4; }
+button.primary { background: #4b74ff; color: #fff; }
+button.primary:hover { background: #3f65e6; }
+
+.muted { color: #667; font-size: 0.9rem; }
+
+.bpm { display: flex; align-items: center; gap: 0.6rem; }
+.bpm input[type="number"] { width: 70px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 8px; }
+.bpm input[type="range"] { width: 180px; }
+
+.steps { display: flex; align-items: center; gap: 0.6rem; }
+.steps input[type="number"] { width: 68px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 8px; }
+.steps input[type="range"] { width: 160px; }
+
+.sample-upload {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.sample-upload .file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f1f5fb;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+}
+.sample-upload input[type="file"] {
+  border: 0;
+}
+
+.grid {
+  display: grid;
+  gap: 0.5rem;
+}
+.row {
+  display: grid;
+  grid-template-columns: 110px repeat(16, 1fr);
+  gap: 0.35rem;
+  align-items: center;
+}
+.track-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cell {
+  height: 28px;
+  background: #eff3fb;
+  border: 1px solid #d7dcef;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cell.active { background: #4b74ff; border-color: #3f65e6; }
+.cell.active { box-shadow: 0 0 0 2px rgba(75,116,255,0.2) inset; }
+.cell.is-current {
+  outline: 2px solid #7ea2ff;
+  outline-offset: -2px;
+}
+
+.legend { margin-top: 0.6rem; }
+
+.drones-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+.drone {
+  display: grid;
+  grid-template-columns: 100px 140px 120px 1fr;
+  gap: 0.6rem;
+  align-items: center;
+}
+.drone select, .drone input[type="range"] {
+  width: 100%;
+}
+.drone .vol input[type="range"] { width: 100%; }
+
+/* Beep instruments */
+.instruments-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+.inst {
+  display: grid;
+  grid-template-columns: 90px 120px 120px 140px 1fr;
+  gap: 0.6rem;
+  align-items: center;
+}
+.inst-label { font-weight: 600; }
+.inst select, .inst input[type="range"] { width: 100%; }

@@ -3,13 +3,209 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Static Site</title>
+  <title>Music Toy — Drones, Beats & Blips</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <main>
-    <h1>Welcome to Your Static Site</h1>
+    <h1 style="margin-top:0;">Music Toy</h1>
+
+    <section class="controls">
+      <div class="transport">
+        <button id="playToggle" class="primary">Play</button>
+        <div class="bpm">
+          <label for="bpmInput">BPM</label>
+          <input id="bpmInput" type="number" min="40" max="220" step="1" value="120">
+          <input id="bpmSlider" type="range" min="40" max="220" step="1" value="120">
+        </div>
+        <div class="steps">
+          <label for="stepsInput">Steps</label>
+          <input id="stepsInput" type="number" min="4" max="32" step="1" value="16">
+          <input id="stepsSlider" type="range" min="4" max="32" step="1" value="16">
+        </div>
+      </div>
+
+      <div class="sample-upload">
+        <label class="file">
+          <span>Upload sample</span>
+          <input id="sampleFile" type="file" accept="audio/*">
+        </label>
+        <span id="sampleStatus" class="muted">No sample</span>
+      </div>
+    </section>
+
+    <section id="sequencer">
+      <h2>Sequencer</h2>
+      <div id="grid" class="grid"></div>
+      <div class="legend muted">Tracks: Kick, Snare, Hat, Beep 1, Beep 2, Blip, Sample • steps configurable</div>
+    </section>
+
+    <section id="instruments">
+      <h2>Beep Instruments</h2>
+      <div class="instruments-list">
+        <div class="inst" data-id="beep1">
+          <span class="inst-label">Beep 1</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+
+        <div class="inst" data-id="beep2">
+          <span class="inst-label">Beep 2</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.30">
+          </label>
+        </div>
+
+        <div class="inst" data-id="blip">
+          <span class="inst-label">Blip</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+      </div>
+      <div class="legend muted">Beep tracks use the sequencer. Set their voice, wave, note, and volume here.</div>
+    </section>
+
+    <section id="drones">
+      <h2>Drones</h2>
+      <div class="drones-list">
+        <div class="drone" data-id="1">
+          <button class="drone-toggle">Start</button>
+          <label>
+            Note
+            <select class="drone-note"></select>
+          </label>
+          <label>
+            Wave
+            <select class="drone-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="drone-vol" type="range" min="0" max="1" step="0.01" value="0.5">
+          </label>
+        </div>
+
+        <div class="drone" data-id="2">
+          <button class="drone-toggle">Start</button>
+          <label>
+            Note
+            <select class="drone-note"></select>
+          </label>
+          <label>
+            Wave
+            <select class="drone-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="drone-vol" type="range" min="0" max="1" step="0.01" value="0.4">
+          </label>
+        </div>
+
+        <div class="drone" data-id="3">
+          <button class="drone-toggle">Start</button>
+          <label>
+            Note
+            <select class="drone-note"></select>
+          </label>
+          <label>
+            Wave
+            <select class="drone-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="drone-vol" type="range" min="0" max="1" step="0.01" value="0.3">
+          </label>
+        </div>
+      </div>
+      <div class="legend muted">Drones are sustained tones. Use Start/Stop, pick a note & wave, adjust volume.</div>
+    </section>
   </main>
+
   <footer>
     <p>&copy; 2025 Your Name</p>
   </footer>
