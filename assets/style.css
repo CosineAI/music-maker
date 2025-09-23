@@ -98,6 +98,10 @@ button.primary:hover { background: #3f65e6; }
 .bpm input[type="number"] { width: 70px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 8px; }
 .bpm input[type="range"] { width: 180px; }
 
+.steps { display: flex; align-items: center; gap: 0.6rem; }
+.steps input[type="number"] { width: 68px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 8px; }
+.steps input[type="range"] { width: 160px; }
+
 .sample-upload {
   display: flex;
   align-items: center;

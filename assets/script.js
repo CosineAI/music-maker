@@ -13,7 +13,7 @@
     { id: "blip", name: "Blip" },
     { id: "sample", name: "Sample" },
   ];
-  const steps = 16;
+  let steps = 16;
   let bpm = 120;
   let playing = false;
   let currentStep = -1;
@@ -24,6 +24,8 @@
   const playToggle = document.getElementById("playToggle");
   const bpmInput = document.getElementById("bpmInput");
   const bpmSlider = document.getElementById("bpmSlider");
+  const stepsInput = document.getElementById("stepsInput");
+  const stepsSlider = document.getElementById("stepsSlider");
   const sampleFile = document.getElementById("sampleFile");
   const sampleStatus = document.getElementById("sampleStatus");
 
@@ -39,9 +41,13 @@
   }
 
   function buildGrid() {
+    gridEl.innerHTML = "";
+    Object.keys(cellMap).forEach(k => delete cellMap[k]);
+
     tracks.forEach(track => {
       const row = document.createElement("div");
       row.className = "row";
+      row.style.gridTemplateColumns = `110px repeat(${steps}, 1fr)`;
 
       const label = document.createElement("div");
       label.className = "track-label";
@@ -55,6 +61,7 @@
         cell.className = "cell";
         cell.dataset.track = track.id;
         cell.dataset.step = String(i);
+        cell.classList.toggle("active", !!sequences[track.id][i]);
         cell.addEventListener("click", () => {
           const id = cell.dataset.track;
           const s = parseInt(cell.dataset.step, 10);
@@ -71,13 +78,13 @@
 
   function clearCurrentIndicators() {
     tracks.forEach(t => {
-      cellMap[t.id].forEach(c => c.classList.remove("is-current"));
+      if (cellMap[t.id]) cellMap[t.id].forEach(c => c.classList.remove("is-current"));
     });
   }
 
   function setCurrentIndicator(stepIndex) {
     tracks.forEach(t => {
-      const cell = cellMap[t.id][stepIndex];
+      const cell = cellMap[t.id] && cellMap[t.id][stepIndex];
       if (cell) cell.classList.add("is-current");
     });
   }
@@ -261,6 +268,37 @@
   function clampNumber(n, min, max) {
     return Math.max(min, Math.min(max, isNaN(n) ? min : n));
   }
+
+  function setSteps(n) {
+    const next = clampNumber(parseInt(n, 10), 4, 32);
+    if (!Number.isFinite(next) || next === steps) {
+      stepsInput.value = String(steps);
+      stepsSlider.value = String(steps);
+      return;
+    }
+    steps = next;
+    stepsInput.value = String(steps);
+    stepsSlider.value = String(steps);
+
+    tracks.forEach(t => {
+      const oldSeq = sequences[t.id];
+      const newSeq = Array(steps).fill(false);
+      const L = Math.min(oldSeq.length, steps);
+      for (let i = 0; i < L; i++) newSeq[i] = oldSeq[i];
+      sequences[t.id] = newSeq;
+    });
+
+    buildGrid();
+
+    if (playing) {
+      clearCurrentIndicators();
+      currentStep = currentStep % steps;
+      setCurrentIndicator(currentStep);
+    }
+  }
+
+  stepsInput.addEventListener("input", () => setSteps(stepsInput.value || "16"));
+  stepsSlider.addEventListener("input", () => setSteps(stepsSlider.value || "16"));
 
   buildGrid();
 

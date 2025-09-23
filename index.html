@@ -18,6 +18,11 @@
           <input id="bpmInput" type="number" min="40" max="220" step="1" value="120">
           <input id="bpmSlider" type="range" min="40" max="220" step="1" value="120">
         </div>
+        <div class="steps">
+          <label for="stepsInput">Steps</label>
+          <input id="stepsInput" type="number" min="4" max="32" step="1" value="16">
+          <input id="stepsSlider" type="range" min="4" max="32" step="1" value="16">
+        </div>
       </div>
 
       <div class="sample-upload">
@@ -32,7 +37,7 @@
     <section id="sequencer">
       <h2>Sequencer</h2>
       <div id="grid" class="grid"></div>
-      <div class="legend muted">Tracks: Kick, Snare, Hat, Blip, Sample • 16 steps</div>
+      <div class="legend muted">Tracks: Kick, Snare, Hat, Blip, Sample • steps configurable</div>
     </section>
 
     <section id="drones">
