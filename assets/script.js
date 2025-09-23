@@ -6,18 +6,6 @@
   master.gain.value = 0.8;
   master.connect(ctx.destination);
 
-  const tracks = [
-    { id: "kick", name: "Kick" },
-    { id: "snare", name: "Snare" },
-    { id: "hat", name: "Hat" },
-    { id: "beep1", name: "Beep 1" },
-    { id: "beep2", name: "Beep 2" },
-    { id: "blip", name: "Blip" },
-    { id: "sample", name: "Sample" },
-  ];
-  const TRACK_IDS = tracks.map(t => t.id);
-  const BEEP_IDS = ["beep1", "beep2", "blip"];
-
   let steps = 16;
   let bpm = 120;
   let playing = false;
@@ -33,52 +21,78 @@
   const stepsSlider = document.getElementById("stepsSlider");
   const sampleFile = document.getElementById("sampleFile");
   const sampleStatus = document.getElementById("sampleStatus");
+  const instrumentsListEl = document.getElementById("instrumentsList");
+  const addBeepBtn = document.getElementById("addBeep");
 
-  const sequences = Object.fromEntries(tracks.map(t => [t.id, Array(steps).fill(false)]));
-  const cellMap = {}; // trackId -> [cells]
+  function ensureContext() { if (ctx.state !== "running") ctx.resume(); }
+  function clampNumber(n, min, max) { return Math.max(min, Math.min(max, isNaN(n) ? min : n)); }
+  function stepMs() { return (60000 / bpm) / 4; }
 
-  function ensureContext() {
-    if (ctx.state !== "running") ctx.resume();
+  // Track and sequence state
+  const sequences = {};
+  const cellMap = {};
+  let tracks = [];
+  let beepIds = ["beep1", "beep2", "blip"];
+  function beepLabel(id) {
+    if (id === "blip") return "Blip";
+    const n = parseInt(id.replace("beep", ""), 10);
+    return Number.isFinite(n) ? `Beep ${n}` : "Beep";
   }
+  function rebuildTracks() {
+    tracks = [
+      { id: "kick", name: "Kick" },
+      { id: "snare", name: "Snare" },
+      { id: "hat", name: "Hat" },
+      ...beepIds.map(id => ({ id, name: beepLabel(id) })),
+      { id: "sample", name: "Sample" },
+    ];
+  }
+  function TRACK_IDS() { return tracks.map(t => t.id); }
 
-  function stepMs() {
-    return (60000 / bpm) / 4;
+  function syncSequencesWithTracks() {
+    const ids = new Set(TRACK_IDS());
+    Object.keys(sequences).forEach(id => {
+      if (!ids.has(id)) delete sequences[id];
+    });
+    tracks.forEach(t => {
+      const oldSeq = sequences[t.id];
+      if (!oldSeq) {
+        sequences[t.id] = Array(steps).fill(false);
+      } else if (oldSeq.length !== steps) {
+        const next = Array(steps).fill(false);
+        const L = Math.min(oldSeq.length, steps);
+        for (let i = 0; i < L; i++) next[i] = oldSeq[i];
+        sequences[t.id] = next;
+      }
+    });
   }
 
   function sequencesToHexList() {
     const digits = Math.ceil(steps / 4);
-    return TRACK_IDS.map(id => {
+    return TRACK_IDS().map(id => {
       let v = 0n;
-      const seq = sequences[id];
-      for (let i = 0; i < steps; i++) {
-        if (seq[i]) v |= (1n << BigInt(i));
-      }
+      const seq = sequences[id] || Array(steps).fill(false);
+      for (let i = 0; i < steps; i++) if (seq[i]) v |= (1n << BigInt(i));
       const hex = v.toString(16);
       return hex.padStart(digits, "0");
     });
   }
-
   function hexToSequence(hex, count) {
     const v = BigInt("0x" + (hex || "0"));
     const out = Array(count).fill(false);
-    for (let i = 0; i < count; i++) {
-      out[i] = ((v >> BigInt(i)) & 1n) === 1n;
-    }
+    for (let i = 0; i < count; i++) out[i] = ((v >> BigInt(i)) & 1n) === 1n;
     return out;
   }
-
   function readParams() {
     const raw = (window.location.hash || "").replace(/^#/, "");
     if (raw) return new URLSearchParams(raw);
     const q = (window.location.search || "").replace(/^\?/, "");
     return new URLSearchParams(q);
   }
-
   function writeParams(sp) {
     const base = window.location.pathname + "#" + sp.toString();
     window.history.replaceState({}, "", base);
   }
-
   function updateURL() {
     const sp = new URLSearchParams();
     sp.set("b", String(bpm));
@@ -90,6 +104,13 @@
     if (dVal) sp.set("d", dVal);
     writeParams(sp);
   }
+
+  // Grid mouse painting
+  let painting = false;
+  let paintValue = false;
+  document.addEventListener("pointerup", () => {
+    if (painting) { painting = false; updateURL(); }
+  });
 
   function buildGrid() {
     gridEl.innerHTML = "";
@@ -112,14 +133,28 @@
         cell.className = "cell";
         cell.dataset.track = track.id;
         cell.dataset.step = String(i);
-        cell.classList.toggle("active", !!sequences[track.id][i]);
-        cell.addEventListener("click", () => {
+        cell.classList.toggle("active", !!sequences[track.id]?.[i]);
+
+        cell.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
           const id = cell.dataset.track;
           const s = parseInt(cell.dataset.step, 10);
-          sequences[id][s] = !sequences[id][s];
-          cell.classList.toggle("active", sequences[id][s]);
-          updateURL();
+          const curr = !!sequences[id][s];
+          paintValue = !curr;
+          painting = true;
+          sequences[id][s] = paintValue;
+          cell.classList.toggle("active", paintValue);
         });
+        cell.addEventListener("pointerenter", () => {
+          if (!painting) return;
+          const id = cell.dataset.track;
+          const s = parseInt(cell.dataset.step, 10);
+          if (sequences[id][s] !== paintValue) {
+            sequences[id][s] = paintValue;
+            cell.classList.toggle("active", paintValue);
+          }
+        });
+
         row.appendChild(cell);
         cellMap[track.id].push(cell);
       }
@@ -133,43 +168,31 @@
       if (cellMap[t.id]) cellMap[t.id].forEach(c => c.classList.remove("is-current"));
     });
   }
-
   function setCurrentIndicator(stepIndex) {
     tracks.forEach(t => {
       const cell = cellMap[t.id] && cellMap[t.id][stepIndex];
       if (cell) cell.classList.add("is-current");
     });
   }
-
   function scheduleLoop() {
     if (!playing) return;
-    timer = setTimeout(() => {
-      tick();
-      scheduleLoop();
-    }, stepMs());
+    timer = setTimeout(() => { tick(); scheduleLoop(); }, stepMs());
   }
-
   function tick() {
     clearCurrentIndicators();
     currentStep = (currentStep + 1) % steps;
     setCurrentIndicator(currentStep);
 
     const when = ctx.currentTime + 0.01;
-    tracks.forEach(t => {
-      if (sequences[t.id][currentStep]) triggerTrack(t.id, when);
-    });
+    tracks.forEach(t => { if (sequences[t.id]?.[currentStep]) triggerTrack(t.id, when); });
   }
 
   function triggerTrack(id, when) {
-    switch (id) {
-      case "kick": return playKick(when);
-      case "snare": return playSnare(when);
-      case "hat": return playHat(when);
-      case "beep1": return playBeep("beep1", when);
-      case "beep2": return playBeep("beep2", when);
-      case "blip": return playBeep("blip", when);
-      case "sample": return playSample(when);
-    }
+    if (id === "kick") return playKick(when);
+    if (id === "snare") return playSnare(when);
+    if (id === "hat") return playHat(when);
+    if (beepIds.includes(id)) return playBeep(id, when);
+    if (id === "sample") return playSample(when);
   }
 
   function playKick(when) {
@@ -187,7 +210,6 @@
     osc.start(when);
     osc.stop(when + 0.3);
   }
-
   function playSnare(when) {
     const bufferSize = Math.floor(0.2 * ctx.sampleRate);
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -225,7 +247,6 @@
     osc.start(when);
     osc.stop(when + 0.11);
   }
-
   function playHat(when) {
     const bufferSize = Math.floor(0.08 * ctx.sampleRate);
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -251,21 +272,6 @@
     noise.stop(when + 0.07);
   }
 
-  function playBlip(when) {
-    const osc = ctx.createOscillator();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(660, when);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.35, when);
-    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.12);
-
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(when);
-    osc.stop(when + 0.14);
-  }
-
   function playSample(when) {
     if (!sampleBuffer) return;
     const src = ctx.createBufferSource();
@@ -280,14 +286,38 @@
     src.start(when);
   }
 
-  // Beep instruments
+  // Beep instruments synthesis
   const VOICE_TO_IDX = { "blip": 0, "pluck": 1, "chime": 2, "fm": 3 };
   const IDX_TO_VOICE = ["blip", "pluck", "chime", "fm"];
-  const beepInst = Object.fromEntries(BEEP_IDS.map(id => [id, { voice: "blip", wave: "square", freq: 659.25, vol: 0.35 }]));
-  // Default per instrument
-  beepInst["beep1"].freq = 440.0; // A4
-  beepInst["beep2"].freq = 329.63; // E4
-  beepInst["blip"].freq = 659.25; // E5 ~ original blip
+  const WAVE_TO_IDX = { "sine": 0, "triangle": 1, "square": 2, "sawtooth": 3 };
+  const IDX_TO_WAVE = ["sine", "triangle", "square", "sawtooth"];
+  function buildDroneNotes() {
+    const NAMES = [
+      ["C"], ["C#", "Db"], ["D"], ["D#", "Eb"], ["E"],
+      ["F"], ["F#", "Gb"], ["G"], ["G#", "Ab"], ["A"], ["A#", "Bb"], ["B"],
+    ];
+    const out = [];
+    for (let octave = 2; octave <= 5; octave++) {
+      for (let pc = 0; pc < 12; pc++) {
+        const names = NAMES[pc];
+        const label = names.length === 1 ? `${names[0]}${octave}` : `${names[0]}${octave}/${names[1]}${octave}`;
+        const midi = 12 * (octave + 1) + pc;
+        const f = 440 * Math.pow(2, (midi - 69) / 12);
+        out.push({ name: label, f });
+      }
+    }
+    return out;
+  }
+  const DRONE_NOTES = buildDroneNotes();
+
+  const beepInst = {};
+  function setDefaultBeepInst(id) {
+    beepInst[id] = { voice: "blip", wave: "square", freq: 440.0, vol: 0.35 };
+  }
+  // Defaults for initial channels
+  setDefaultBeepInst("beep1"); beepInst["beep1"].freq = 440.0;
+  setDefaultBeepInst("beep2"); beepInst["beep2"].freq = 329.63; beepInst["beep2"].vol = 0.30;
+  setDefaultBeepInst("blip");  beepInst["blip"].freq = 659.25;
 
   function playBeep(id, when) {
     const inst = beepInst[id];
@@ -300,7 +330,6 @@
       default: return playBeepBlip(inst, when);
     }
   }
-
   function playBeepBlip(inst, when) {
     const osc = ctx.createOscillator();
     osc.type = inst.wave;
@@ -313,7 +342,6 @@
     osc.start(when);
     osc.stop(when + 0.14);
   }
-
   function playBeepPluck(inst, when) {
     const osc = ctx.createOscillator();
     osc.type = inst.wave;
@@ -331,7 +359,6 @@
     osc.start(when);
     osc.stop(when + 0.25);
   }
-
   function playBeepChime(inst, when) {
     const osc = ctx.createOscillator();
     osc.type = "sine";
@@ -349,28 +376,22 @@
     osc.start(when);
     osc.stop(when + 0.62);
   }
-
   function playBeepFM(inst, when) {
     const carrier = ctx.createOscillator();
     carrier.type = "sine";
     carrier.frequency.setValueAtTime(inst.freq, when);
-
     const mod = ctx.createOscillator();
     mod.type = "sine";
     mod.frequency.setValueAtTime(inst.freq * 2, when);
-
     const modGain = ctx.createGain();
-    modGain.gain.value = inst.freq * 0.25; // modulation index
-
+    modGain.gain.value = inst.freq * 0.25;
     const outGain = ctx.createGain();
     outGain.gain.setValueAtTime(Math.max(0.001, inst.vol), when);
     outGain.gain.exponentialRampToValueAtTime(0.001, when + 0.35);
-
     mod.connect(modGain);
     modGain.connect(carrier.frequency);
     carrier.connect(outGain);
     outGain.connect(master);
-
     mod.start(when);
     carrier.start(when);
     mod.stop(when + 0.4);
@@ -386,10 +407,12 @@
     return idx;
   }
 
+  // Instruments encoding for URL
   function encodeInstruments() {
     const parts = [];
-    BEEP_IDS.forEach(id => {
+    beepIds.forEach(id => {
       const inst = beepInst[id];
+      if (!inst) return;
       const v = VOICE_TO_IDX[inst.voice] ?? 0;
       const w = WAVE_TO_IDX[inst.wave] ?? 2;
       const n = nearestNoteIndex(inst.freq);
@@ -398,35 +421,178 @@
     });
     return parts.join(".");
   }
-
   function decodeInstruments(str) {
     if (!str) return;
     const groups = str.split(".");
-    document.querySelectorAll(".inst").forEach(instEl => {
-      const id = String(instEl.dataset.id);
-      const voiceSel = instEl.querySelector(".inst-voice");
-      const waveSel = instEl.querySelector(".inst-wave");
-      const noteSel = instEl.querySelector(".inst-note");
-      const vol = instEl.querySelector(".inst-vol");
-      const g = groups[BEEP_IDS.indexOf(id)] || "";
-      const [vStr, wStr, nStr, volStr] = g.split("-");
+    setBeepChannelCount(groups.length);
+    buildInstrumentList();
+    groups.forEach((g, idx) => {
+      const [vStr, wStr, nStr, volStr] = (g || "").split("-");
       const v = Math.max(0, Math.min(3, parseInt(vStr || "0", 10) || 0));
       const w = Math.max(0, Math.min(3, parseInt(wStr || "2", 10) || 2));
       const n = Math.max(0, Math.min(DRONE_NOTES.length - 1, parseInt(nStr || "0", 10) || 0));
       const p = Math.max(0, Math.min(100, parseInt(volStr || "35", 10) || 35));
-
-      voiceSel.value = IDX_TO_VOICE[v];
-      waveSel.value = IDX_TO_WAVE[w];
-      noteSel.value = String(DRONE_NOTES[n].f);
-      vol.value = String(p / 100);
-
-      beepInst[id].voice = voiceSel.value;
-      beepInst[id].wave = waveSel.value;
-      beepInst[id].freq = parseFloat(noteSel.value);
-      beepInst[id].vol = parseFloat(vol.value);
+      const id = beepIds[idx];
+      const inst = beepInst[id] || {};
+      inst.voice = IDX_TO_VOICE[v];
+      inst.wave = IDX_TO_WAVE[w];
+      inst.freq = DRONE_NOTES[n].f;
+      inst.vol = p / 100;
+      beepInst[id] = inst;
+      // reflect to UI
+      const instEl = instrumentsListEl.querySelector(`.inst[data-id="${id}"]`);
+      if (instEl) {
+        instEl.querySelector(".inst-voice").value = inst.voice;
+        instEl.querySelector(".inst-wave").value = inst.wave;
+        instEl.querySelector(".inst-note").value = String(inst.freq);
+        instEl.querySelector(".inst-vol").value = String(inst.vol);
+      }
     });
   }
 
+  // Build instrument UI dynamically
+  function buildInstrumentList() {
+    if (!instrumentsListEl) return;
+    instrumentsListEl.innerHTML = "";
+    beepIds.forEach(id => {
+      const inst = beepInst[id] || { voice: "blip", wave: "square", freq: 440.0, vol: 0.35 };
+      const instEl = document.createElement("div");
+      instEl.className = "inst";
+      instEl.dataset.id = id;
+
+      const label = document.createElement("span");
+      label.className = "inst-label";
+      label.textContent = beepLabel(id);
+      instEl.appendChild(label);
+
+      // Voice
+      const voiceWrap = document.createElement("label");
+      voiceWrap.innerHTML = "Voice";
+      const voiceSel = document.createElement("select");
+      voiceSel.className = "inst-voice";
+      ["blip", "pluck", "chime", "fm"].forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        voiceSel.appendChild(opt);
+      });
+      voiceWrap.appendChild(voiceSel);
+      instEl.appendChild(voiceWrap);
+
+      // Wave
+      const waveWrap = document.createElement("label");
+      waveWrap.innerHTML = "Wave";
+      const waveSel = document.createElement("select");
+      waveSel.className = "inst-wave";
+      ["sine", "triangle", "square", "sawtooth"].forEach(w => {
+        const opt = document.createElement("option");
+        opt.value = w;
+        opt.textContent = w;
+        waveSel.appendChild(opt);
+      });
+      waveWrap.appendChild(waveSel);
+      instEl.appendChild(waveWrap);
+
+      // Note
+      const noteWrap = document.createElement("label");
+      noteWrap.innerHTML = "Note";
+      const noteSel = document.createElement("select");
+      noteSel.className = "inst-note";
+      DRONE_NOTES.forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = String(n.f);
+        opt.textContent = `${n.name} (${n.f.toFixed(2)} Hz)`;
+        noteSel.appendChild(opt);
+      });
+      noteWrap.appendChild(noteSel);
+      instEl.appendChild(noteWrap);
+
+      // Volume
+      const volWrap = document.createElement("label");
+      volWrap.className = "vol";
+      volWrap.innerHTML = "Volume";
+      const volInput = document.createElement("input");
+      volInput.className = "inst-vol";
+      volInput.type = "range";
+      volInput.min = "0"; volInput.max = "1"; volInput.step = "0.01";
+      volWrap.appendChild(volInput);
+      instEl.appendChild(volWrap);
+
+      // Remove button
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-btn";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", () => {
+        removeBeepChannel(id);
+      });
+      instEl.appendChild(removeBtn);
+
+      // Defaults
+      voiceSel.value = inst.voice;
+      waveSel.value = inst.wave;
+      // Choose nearest note
+      let di = nearestNoteIndex(inst.freq);
+      noteSel.value = String(DRONE_NOTES[di].f);
+      volInput.value = String(inst.vol);
+
+      // Sync model
+      inst.freq = parseFloat(noteSel.value);
+      beepInst[id] = inst;
+
+      voiceSel.addEventListener("change", () => { beepInst[id].voice = voiceSel.value; updateURL(); });
+      waveSel.addEventListener("change", () => { beepInst[id].wave = waveSel.value; updateURL(); });
+      noteSel.addEventListener("change", () => { beepInst[id].freq = parseFloat(noteSel.value); updateURL(); });
+      volInput.addEventListener("input", () => { beepInst[id].vol = parseFloat(volInput.value); updateURL(); });
+
+      instrumentsListEl.appendChild(instEl);
+    });
+  }
+
+  function nextBeepId() {
+    let i = 1;
+    while (beepIds.includes(`beep${i}`)) i++;
+    return `beep${i}`;
+  }
+  function addBeepChannel(defaultFreq = 440) {
+    const id = nextBeepId();
+    beepIds.push(id);
+    beepInst[id] = { voice: "blip", wave: "square", freq: defaultFreq, vol: 0.35 };
+    onBeepChannelsChanged();
+  }
+  function removeBeepChannel(id) {
+    const idx = beepIds.indexOf(id);
+    if (idx === -1) return;
+    beepIds.splice(idx, 1);
+    delete beepInst[id];
+    onBeepChannelsChanged();
+  }
+  function setBeepChannelCount(n) {
+    const count = clampNumber(parseInt(n, 10), 0, 16);
+    while (beepIds.length < count) {
+      const id = nextBeepId();
+      beepIds.push(id);
+      beepInst[id] = { voice: "blip", wave: "square", freq: 440, vol: 0.35 };
+    }
+    if (beepIds.length > count) {
+      const toRemove = beepIds.slice(count);
+      beepIds = beepIds.slice(0, count);
+      toRemove.forEach(id => { delete beepInst[id]; delete sequences[id]; });
+    }
+    onBeepChannelsChanged();
+  }
+  function onBeepChannelsChanged() {
+    rebuildTracks();
+    syncSequencesWithTracks();
+    buildGrid();
+    buildInstrumentList();
+    updateURL();
+  }
+
+  if (addBeepBtn) addBeepBtn.addEventListener("click", () => {
+    addBeepChannel(220);
+  });
+
+  // Transport and controls
   bpmInput.addEventListener("input", () => {
     bpm = clampNumber(parseInt(bpmInput.value || "120", 10), 40, 220);
     bpmSlider.value = String(bpm);
@@ -437,7 +603,6 @@
     bpmInput.value = String(bpm);
     updateURL();
   });
-
   playToggle.addEventListener("click", () => {
     ensureContext();
     if (!playing) {
@@ -469,10 +634,6 @@
     }
   });
 
-  function clampNumber(n, min, max) {
-    return Math.max(min, Math.min(max, isNaN(n) ? min : n));
-  }
-
   function setSteps(n) {
     const next = clampNumber(parseInt(n, 10), 4, 32);
     if (!Number.isFinite(next) || next === steps) {
@@ -484,14 +645,7 @@
     stepsInput.value = String(steps);
     stepsSlider.value = String(steps);
 
-    tracks.forEach(t => {
-      const oldSeq = sequences[t.id];
-      const newSeq = Array(steps).fill(false);
-      const L = Math.min(oldSeq.length, steps);
-      for (let i = 0; i < L; i++) newSeq[i] = oldSeq[i];
-      sequences[t.id] = newSeq;
-    });
-
+    syncSequencesWithTracks();
     buildGrid();
 
     if (playing) {
@@ -501,86 +655,13 @@
     }
     updateURL();
   }
-
   stepsInput.addEventListener("input", () => setSteps(stepsInput.value || "16"));
   stepsSlider.addEventListener("input", () => setSteps(stepsSlider.value || "16"));
 
-  /* Drones */
-  function buildDroneNotes() {
-    const NAMES = [
-      ["C"], ["C#", "Db"], ["D"], ["D#", "Eb"], ["E"],
-      ["F"], ["F#", "Gb"], ["G"], ["G#", "Ab"], ["A"], ["A#", "Bb"], ["B"],
-    ];
-    const out = [];
-    for (let octave = 2; octave <= 5; octave++) {
-      for (let pc = 0; pc < 12; pc++) {
-        const names = NAMES[pc];
-        const label = names.length === 1
-          ? `${names[0]}${octave}`
-          : `${names[0]}${octave}/${names[1]}${octave}`;
-        const midi = 12 * (octave + 1) + pc; // C4 => 60
-        const f = 440 * Math.pow(2, (midi - 69) / 12);
-        out.push({ name: label, f });
-      }
-    }
-    return out;
-  }
-  const DRONE_NOTES = buildDroneNotes();
-  const WAVE_TO_IDX = { "sine": 0, "triangle": 1, "square": 2, "sawtooth": 3 };
-  const IDX_TO_WAVE = ["sine", "triangle", "square", "sawtooth"];
-
-  // Beep instruments UI
-  document.querySelectorAll(".inst").forEach(instEl => {
-    const id = String(instEl.dataset.id);
-    const voiceSel = instEl.querySelector(".inst-voice");
-    const waveSel = instEl.querySelector(".inst-wave");
-    const noteSel = instEl.querySelector(".inst-note");
-    const vol = instEl.querySelector(".inst-vol");
-
-    // Populate notes
-    DRONE_NOTES.forEach(n => {
-      const opt = document.createElement("option");
-      opt.value = String(n.f);
-      opt.textContent = `${n.name} (${n.f.toFixed(2)} Hz)`;
-      noteSel.appendChild(opt);
-    });
-
-    // Set defaults based on id
-    const target = id === "beep1" ? 440.0 : id === "beep2" ? 329.63 : 659.25;
-    let di = 0, best = Infinity;
-    for (let i = 0; i < DRONE_NOTES.length; i++) {
-      const err = Math.abs(DRONE_NOTES[i].f - target);
-      if (err < best) { best = err; di = i; }
-    }
-    voiceSel.value = beepInst[id].voice;
-    waveSel.value = beepInst[id].wave;
-    noteSel.value = String(DRONE_NOTES[di].f);
-    vol.value = String(beepInst[id].vol);
-
-    // Sync model
-    beepInst[id].freq = parseFloat(noteSel.value);
-
-    voiceSel.addEventListener("change", () => {
-      beepInst[id].voice = voiceSel.value;
-      updateURL();
-    });
-    waveSel.addEventListener("change", () => {
-      beepInst[id].wave = waveSel.value;
-      updateURL();
-    });
-    noteSel.addEventListener("change", () => {
-      beepInst[id].freq = parseFloat(noteSel.value);
-      updateURL();
-    });
-    vol.addEventListener("input", () => {
-      beepInst[id].vol = parseFloat(vol.value);
-      updateURL();
-    });
-  });
-
-  const droneNodes = {}; // id -> { osc, gain, active }
-  const droneDesired = {}; // id -> boolean
-  const droneToggles = {}; // id -> button
+  // Drones (unchanged from previous)
+  const droneNodes = {};
+  const droneDesired = {};
+  const droneToggles = {};
   let dronesReady = false;
 
   document.querySelectorAll(".drone").forEach((droneEl, idx) => {
@@ -605,7 +686,7 @@
         const err = Math.abs(DRONE_NOTES[i].f - target);
         if (err < best) { best = err; di = i; }
       }
-      noteSel.value = String(DRONE_NOTES[di].f); // A3 default
+      noteSel.value = String(DRONE_NOTES[di].f);
     }
 
     function startDrone() {
@@ -625,7 +706,6 @@
       droneNodes[id] = { osc, gain, active: true };
       toggleBtn.textContent = "Stop";
     }
-
     function stopDrone() {
       const node = droneNodes[id];
       if (!node) return;
@@ -648,7 +728,6 @@
       }
       updateURL();
     });
-
     noteSel.addEventListener("change", () => {
       const node = droneNodes[id];
       if (node?.active) node.osc.frequency.setValueAtTime(parseFloat(noteSel.value), ctx.currentTime);
@@ -669,12 +748,9 @@
 
   function startArmedDrones() {
     Object.keys(droneToggles).forEach(id => {
-      if (droneDesired[id] && !droneNodes[id]?.active) {
-        droneToggles[id].click();
-      }
+      if (droneDesired[id] && !droneNodes[id]?.active) droneToggles[id].click();
     });
   }
-
   function encodeDrones() {
     if (!dronesReady) return "";
     const parts = [];
@@ -697,7 +773,6 @@
     });
     return parts.join(".");
   }
-
   function decodeDrones(str) {
     if (!str) return;
     const groups = str.split(".");
@@ -717,13 +792,15 @@
       noteSel.value = String(DRONE_NOTES[n].f);
       vol.value = String(v / 100);
       droneDesired[id] = a;
-      if (!a && droneNodes[id]?.active) {
-        toggleBtn.click();
-      }
+      if (!a && droneNodes[id]?.active) toggleBtn.click();
     });
   }
 
   function loadFromURL() {
+    rebuildTracks();
+    syncSequencesWithTracks();
+    buildInstrumentList();
+
     const sp = readParams();
     const sParam = sp.get("s");
     const bParam = sp.get("b");
@@ -731,8 +808,11 @@
     const iParam = sp.get("i");
     const dParam = sp.get("d");
 
+    if (iParam) decodeInstruments(iParam);
     if (sParam) setSteps(sParam);
-    else buildGrid();
+
+    // Sync sequences with (potentially) new tracks/steps before applying patterns
+    syncSequencesWithTracks();
 
     if (bParam) {
       bpm = clampNumber(parseInt(bParam, 10), 40, 220);
@@ -740,22 +820,19 @@
       bpmSlider.value = String(bpm);
     }
 
+    // Apply pattern if present
     if (pParam) {
       const parts = pParam.split("-");
-      for (let i = 0; i < TRACK_IDS.length; i++) {
+      const ids = TRACK_IDS();
+      for (let i = 0; i < ids.length; i++) {
         const hex = parts[i] || "";
-        sequences[TRACK_IDS[i]] = hexToSequence(hex, steps);
+        sequences[ids[i]] = hexToSequence(hex, steps);
       }
-      buildGrid();
     }
 
-    if (iParam) {
-      decodeInstruments(iParam);
-    }
+    buildGrid();
 
-    if (dParam) {
-      decodeDrones(dParam);
-    }
+    if (dParam) decodeDrones(dParam);
 
     updateURL();
   }
