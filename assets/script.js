@@ -352,15 +352,26 @@
   stepsSlider.addEventListener("input", () => setSteps(stepsSlider.value || "16"));
 
   /* Drones */
-  const DRONE_NOTES = [
-    { name: "C2", f: 65.41 }, { name: "D2", f: 73.42 }, { name: "E2", f: 82.41 }, { name: "F2", f: 87.31 },
-    { name: "G2", f: 98.00 }, { name: "A2", f: 110.00 }, { name: "B2", f: 123.47 },
-    { name: "C3", f: 130.81 }, { name: "D3", f: 146.83 }, { name: "E3", f: 164.81 }, { name: "F3", f: 174.61 },
-    { name: "G3", f: 196.00 }, { name: "A3", f: 220.00 }, { name: "B3", f: 246.94 },
-    { name: "C4", f: 261.63 }, { name: "D4", f: 293.66 }, { name: "E4", f: 329.63 }, { name: "F4", f: 349.23 },
-    { name: "G4", f: 392.00 }, { name: "A4", f: 440.00 }, { name: "B4", f: 493.88 },
-    { name: "C5", f: 523.25 }
-  ];
+  function buildDroneNotes() {
+    const NAMES = [
+      ["C"], ["C#", "Db"], ["D"], ["D#", "Eb"], ["E"],
+      ["F"], ["F#", "Gb"], ["G"], ["G#", "Ab"], ["A"], ["A#", "Bb"], ["B"],
+    ];
+    const out = [];
+    for (let octave = 2; octave <= 5; octave++) {
+      for (let pc = 0; pc < 12; pc++) {
+        const names = NAMES[pc];
+        const label = names.length === 1
+          ? `${names[0]}${octave}`
+          : `${names[0]}${octave}/${names[1]}${octave}`;
+        const midi = 12 * (octave + 1) + pc; // C4 => 60
+        const f = 440 * Math.pow(2, (midi - 69) / 12);
+        out.push({ name: label, f });
+      }
+    }
+    return out;
+  }
+  const DRONE_NOTES = buildDroneNotes();
   const WAVE_TO_IDX = { "sine": 0, "triangle": 1, "square": 2, "sawtooth": 3 };
   const IDX_TO_WAVE = ["sine", "triangle", "square", "sawtooth"];
 
@@ -384,7 +395,15 @@
       opt.textContent = `${n.name} (${n.f.toFixed(2)} Hz)`;
       noteSel.appendChild(opt);
     });
-    noteSel.value = String(DRONE_NOTES[12].f); // A3 default
+    {
+      const target = 220;
+      let di = 0, best = Infinity;
+      for (let i = 0; i < DRONE_NOTES.length; i++) {
+        const err = Math.abs(DRONE_NOTES[i].f - target);
+        if (err < best) { best = err; di = i; }
+      }
+      noteSel.value = String(DRONE_NOTES[di].f); // A3 default
+    }
 
     function startDrone() {
       ensureContext();
