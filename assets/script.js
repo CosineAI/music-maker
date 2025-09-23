@@ -1,2 +1,343 @@
-// Optional JavaScript goes here
-console.log("Static site loaded!");
+/* Music Toy — Drones, Beats & Blips */
+(() => {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioCtx();
+  const master = ctx.createGain();
+  master.gain.value = 0.8;
+  master.connect(ctx.destination);
+
+  const tracks = [
+    { id: "kick", name: "Kick" },
+    { id: "snare", name: "Snare" },
+    { id: "hat", name: "Hat" },
+    { id: "blip", name: "Blip" },
+    { id: "sample", name: "Sample" },
+  ];
+  const steps = 16;
+  let bpm = 120;
+  let playing = false;
+  let currentStep = -1;
+  let timer = null;
+  let sampleBuffer = null;
+
+  const gridEl = document.getElementById("grid");
+  const playToggle = document.getElementById("playToggle");
+  const bpmInput = document.getElementById("bpmInput");
+  const bpmSlider = document.getElementById("bpmSlider");
+  const sampleFile = document.getElementById("sampleFile");
+  const sampleStatus = document.getElementById("sampleStatus");
+
+  const sequences = Object.fromEntries(tracks.map(t => [t.id, Array(steps).fill(false)]));
+  const cellMap = {}; // trackId -> [cells]
+
+  function ensureContext() {
+    if (ctx.state !== "running") ctx.resume();
+  }
+
+  function stepMs() {
+    return (60000 / bpm) / 4;
+  }
+
+  function buildGrid() {
+    tracks.forEach(track => {
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const label = document.createElement("div");
+      label.className = "track-label";
+      label.textContent = track.name;
+      row.appendChild(label);
+
+      cellMap[track.id] = [];
+
+      for (let i = 0; i < steps; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.track = track.id;
+        cell.dataset.step = String(i);
+        cell.addEventListener("click", () => {
+          const id = cell.dataset.track;
+          const s = parseInt(cell.dataset.step, 10);
+          sequences[id][s] = !sequences[id][s];
+          cell.classList.toggle("active", sequences[id][s]);
+        });
+        row.appendChild(cell);
+        cellMap[track.id].push(cell);
+      }
+
+      gridEl.appendChild(row);
+    });
+  }
+
+  function clearCurrentIndicators() {
+    tracks.forEach(t => {
+      cellMap[t.id].forEach(c => c.classList.remove("is-current"));
+    });
+  }
+
+  function setCurrentIndicator(stepIndex) {
+    tracks.forEach(t => {
+      const cell = cellMap[t.id][stepIndex];
+      if (cell) cell.classList.add("is-current");
+    });
+  }
+
+  function scheduleLoop() {
+    if (!playing) return;
+    timer = setTimeout(() => {
+      tick();
+      scheduleLoop();
+    }, stepMs());
+  }
+
+  function tick() {
+    clearCurrentIndicators();
+    currentStep = (currentStep + 1) % steps;
+    setCurrentIndicator(currentStep);
+
+    const when = ctx.currentTime + 0.01;
+    tracks.forEach(t => {
+      if (sequences[t.id][currentStep]) triggerTrack(t.id, when);
+    });
+  }
+
+  function triggerTrack(id, when) {
+    switch (id) {
+      case "kick": return playKick(when);
+      case "snare": return playSnare(when);
+      case "hat": return playHat(when);
+      case "blip": return playBlip(when);
+      case "sample": return playSample(when);
+    }
+  }
+
+  function playKick(when) {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(150, when);
+    osc.frequency.exponentialRampToValueAtTime(50, when + 0.2);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(1, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.2);
+
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.3);
+  }
+
+  function playSnare(when) {
+    const bufferSize = Math.floor(0.2 * ctx.sampleRate);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 1800;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.5, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.15);
+
+    noise.connect(hp);
+    hp.connect(gain);
+    gain.connect(master);
+
+    noise.start(when);
+    noise.stop(when + 0.2);
+
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(200, when);
+
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.2, when);
+    og.gain.exponentialRampToValueAtTime(0.001, when + 0.1);
+
+    osc.connect(og);
+    og.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.11);
+  }
+
+  function playHat(when) {
+    const bufferSize = Math.floor(0.08 * ctx.sampleRate);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 6000;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.35, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.06);
+
+    noise.connect(hp);
+    hp.connect(gain);
+    gain.connect(master);
+
+    noise.start(when);
+    noise.stop(when + 0.07);
+  }
+
+  function playBlip(when) {
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(660, when);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.35, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.12);
+
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.14);
+  }
+
+  function playSample(when) {
+    if (!sampleBuffer) return;
+    const src = ctx.createBufferSource();
+    src.buffer = sampleBuffer;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.5, when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.5);
+
+    src.connect(gain);
+    gain.connect(master);
+    src.start(when);
+  }
+
+  bpmInput.addEventListener("input", () => {
+    bpm = clampNumber(parseInt(bpmInput.value || "120", 10), 40, 220);
+    bpmSlider.value = String(bpm);
+  });
+  bpmSlider.addEventListener("input", () => {
+    bpm = clampNumber(parseInt(bpmSlider.value || "120", 10), 40, 220);
+    bpmInput.value = String(bpm);
+  });
+
+  playToggle.addEventListener("click", () => {
+    ensureContext();
+    if (!playing) {
+      playing = true;
+      playToggle.textContent = "Stop";
+      currentStep = -1;
+      tick();
+      scheduleLoop();
+    } else {
+      playing = false;
+      playToggle.textContent = "Play";
+      clearTimeout(timer);
+      clearCurrentIndicators();
+    }
+  });
+
+  sampleFile.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    ensureContext();
+    const arr = await file.arrayBuffer();
+    try {
+      const buf = await ctx.decodeAudioData(arr);
+      sampleBuffer = buf;
+      sampleStatus.textContent = `Loaded: ${file.name}`;
+    } catch {
+      sampleStatus.textContent = "Failed to decode sample";
+    }
+  });
+
+  function clampNumber(n, min, max) {
+    return Math.max(min, Math.min(max, isNaN(n) ? min : n));
+  }
+
+  buildGrid();
+
+  /* Drones */
+  const DRONE_NOTES = [
+    { name: "C2", f: 65.41 }, { name: "D2", f: 73.42 }, { name: "E2", f: 82.41 }, { name: "F2", f: 87.31 },
+    { name: "G2", f: 98.00 }, { name: "A2", f: 110.00 }, { name: "B2", f: 123.47 },
+    { name: "C3", f: 130.81 }, { name: "D3", f: 146.83 }, { name: "E3", f: 164.81 }, { name: "F3", f: 174.61 },
+    { name: "G3", f: 196.00 }, { name: "A3", f: 220.00 }, { name: "B3", f: 246.94 },
+    { name: "C4", f: 261.63 }, { name: "D4", f: 293.66 }, { name: "E4", f: 329.63 }, { name: "F4", f: 349.23 },
+    { name: "G4", f: 392.00 }, { name: "A4", f: 440.00 }, { name: "B4", f: 493.88 },
+    { name: "C5", f: 523.25 }
+  ];
+
+  const droneNodes = {}; // id -> { osc, gain, active }
+
+  document.querySelectorAll(".drone").forEach((droneEl, idx) => {
+    const id = String(droneEl.dataset.id || idx + 1);
+    const toggleBtn = droneEl.querySelector(".drone-toggle");
+    const noteSel = droneEl.querySelector(".drone-note");
+    const waveSel = droneEl.querySelector(".drone-wave");
+    const vol = droneEl.querySelector(".drone-vol");
+
+    DRONE_NOTES.forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = String(n.f);
+      opt.textContent = `${n.name} (${n.f.toFixed(2)} Hz)`;
+      noteSel.appendChild(opt);
+    });
+    noteSel.value = String(DRONE_NOTES[12].f); // A3 default
+
+    function startDrone() {
+      ensureContext();
+      const osc = ctx.createOscillator();
+      osc.type = waveSel.value;
+      osc.frequency.setValueAtTime(parseFloat(noteSel.value), ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(parseFloat(vol.value), ctx.currentTime + 0.5);
+
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start();
+
+      droneNodes[id] = { osc, gain, active: true };
+      toggleBtn.textContent = "Stop";
+    }
+
+    function stopDrone() {
+      const node = droneNodes[id];
+      if (!node) return;
+      const t = ctx.currentTime;
+      node.gain.gain.cancelScheduledValues(t);
+      node.gain.gain.setValueAtTime(node.gain.gain.value, t);
+      node.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      node.osc.stop(t + 0.35);
+      droneNodes[id] = { active: false };
+      toggleBtn.textContent = "Start";
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      if (!droneNodes[id]?.active) startDrone();
+      else stopDrone();
+    });
+
+    noteSel.addEventListener("change", () => {
+      const node = droneNodes[id];
+      if (node?.active) node.osc.frequency.setValueAtTime(parseFloat(noteSel.value), ctx.currentTime);
+    });
+    waveSel.addEventListener("change", () => {
+      const node = droneNodes[id];
+      if (node?.active) node.osc.type = waveSel.value;
+    });
+    vol.addEventListener("input", () => {
+      const node = droneNodes[id];
+      if (node?.active) node.gain.gain.setTargetAtTime(parseFloat(vol.value), ctx.currentTime, 0.05);
+    });
+  });
+})();
