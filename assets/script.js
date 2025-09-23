@@ -23,10 +23,44 @@
   const sampleStatus = document.getElementById("sampleStatus");
   const instrumentsListEl = document.getElementById("instrumentsList");
   const addBeepBtn = document.getElementById("addBeep");
+  const themeToggle = document.getElementById("themeToggle");
 
   function ensureContext() { if (ctx.state !== "running") ctx.resume(); }
   function clampNumber(n, min, max) { return Math.max(min, Math.min(max, isNaN(n) ? min : n)); }
   function stepMs() { return (60000 / bpm) / 4; }
+
+  // Theme handling
+  function applyTheme(mode) {
+    document.body.classList.toggle("dark", mode === "dark");
+    if (themeToggle) {
+      themeToggle.textContent = mode === "dark" ? "Light" : "Dark";
+      themeToggle.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+    }
+  }
+  function initTheme() {
+    let mode = "light";
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") {
+        mode = saved;
+      } else {
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        mode = prefersDark ? "dark" : "light";
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    applyTheme(mode);
+  }
+  initTheme();
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const next = document.body.classList.contains("dark") ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("theme", next); } catch {}
+    });
+  }
 
   // Track and sequence state
   const sequences = {};

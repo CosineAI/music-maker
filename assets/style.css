@@ -185,3 +185,157 @@ button.primary:hover { background: #3f65e6; }
 .inst-label { font-weight: 600; }
 .inst select, .inst input[type="range"] { width: 100%; }
 .inst .remove-btn { justify-self: end; }
+
+/* Global input/select styling */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="file"],
+select,
+textarea {
+  appearance: none;
+  background: #f9fbfe;
+  border: 1px solid #d7dcef;
+  color: #222;
+  padding: 0.48rem 0.6rem;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+select { padding-right: 2rem; }
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+  border-color: #4b74ff;
+  box-shadow: 0 0 0 2px rgba(75,116,255,0.15);
+  background: #f6f9ff;
+}
+
+/* Better range styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #d7dcef;
+  border-radius: 8px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #4b74ff;
+  border: 2px solid #cbd6ff;
+  border-radius: 50%;
+  margin-top: -5px; /* align with track */
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #d7dcef;
+  border-radius: 8px;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #4b74ff;
+  border: 2px solid #cbd6ff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  appearance: none;
+  border: 0;
+  background: #e8ecf7;
+  color: #222;
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+}
+.theme-toggle:hover { background: #dfe4f4; }
+
+/* Dark mode */
+body.dark {
+  background: linear-gradient(120deg, #0e1219 70%, #181e2b 100%);
+  color: #e7ebf4;
+}
+body.dark main {
+  background: #10151f;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.35), 0 1.5px 6px 0 rgba(0,0,0,0.25);
+}
+body.dark footer {
+  background: #121825;
+  color: #e7ebf4;
+  box-shadow: 0 -2px 12px 0 rgba(0,0,0,0.35);
+}
+body.dark .muted { color: #a5adba; }
+
+body.dark button {
+  background: #2a3140;
+  color: #e7ebf4;
+}
+body.dark button:hover { background: #384054; }
+body.dark button.primary { background: #4b74ff; color: #fff; }
+
+body.dark .grid .cell {
+  background: #1a2030;
+  border-color: #2f374a;
+}
+body.dark .cell.active {
+  background: #4b74ff;
+  border-color: #3f65e6;
+  box-shadow: 0 0 0 2px rgba(75,116,255,0.33) inset;
+}
+body.dark .cell.is-current {
+  outline: 2px solid #7ea2ff;
+  outline-offset: -2px;
+}
+
+/* Inputs in dark mode */
+body.dark input[type="text"],
+body.dark input[type="number"],
+body.dark input[type="email"],
+body.dark input[type="file"],
+body.dark select,
+body.dark textarea {
+  background: #131924;
+  border-color: #2f374a;
+  color: #e7ebf4;
+}
+body.dark select:focus,
+body.dark input[type="text"]:focus,
+body.dark input[type="number"]:focus,
+body.dark input[type="email"]:focus,
+body.dark textarea:focus {
+  border-color: #7ea2ff;
+  box-shadow: 0 0 0 2px rgba(126,162,255,0.25);
+}
+
+body.dark input[type="range"]::-webkit-slider-runnable-track { background: #2f374a; }
+body.dark input[type="range"]::-webkit-slider-thumb {
+  background: #7ea2ff;
+  border: 2px solid #cbd6ff;
+}
+body.dark input[type="range"]::-moz-range-track { background: #2f374a; }
+body.dark input[type="range"]::-moz-range-thumb {
+  background: #7ea2ff;
+  border: 2px solid #cbd6ff;
+}
+
+/* Component-specific dark tweaks */
+body.dark .sample-upload .file { background: #202636; }
