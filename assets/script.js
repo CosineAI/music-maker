@@ -13,6 +13,8 @@
     { id: "blip", name: "Blip" },
     { id: "sample", name: "Sample" },
   ];
+  const TRACK_IDS = tracks.map(t => t.id);
+
   let steps = 16;
   let bpm = 120;
   let playing = false;
@@ -38,6 +40,50 @@
 
   function stepMs() {
     return (60000 / bpm) / 4;
+  }
+
+  function sequencesToHexList() {
+    const digits = Math.ceil(steps / 4);
+    return TRACK_IDS.map(id => {
+      let v = 0n;
+      const seq = sequences[id];
+      for (let i = 0; i < steps; i++) {
+        if (seq[i]) v |= (1n << BigInt(i));
+      }
+      const hex = v.toString(16);
+      return hex.padStart(digits, "0");
+    });
+  }
+
+  function hexToSequence(hex, count) {
+    const v = BigInt("0x" + (hex || "0"));
+    const out = Array(count).fill(false);
+    for (let i = 0; i < count; i++) {
+      out[i] = ((v >> BigInt(i)) & 1n) === 1n;
+    }
+    return out;
+  }
+
+  function readParams() {
+    const raw = (window.location.hash || "").replace(/^#/, "");
+    if (raw) return new URLSearchParams(raw);
+    const q = (window.location.search || "").replace(/^\?/, "");
+    return new URLSearchParams(q);
+  }
+
+  function writeParams(sp) {
+    const base = window.location.pathname + "#" + sp.toString();
+    window.history.replaceState({}, "", base);
+  }
+
+  function updateURL() {
+    const sp = new URLSearchParams();
+    sp.set("b", String(bpm));
+    sp.set("s", String(steps));
+    sp.set("p", sequencesToHexList().join("-"));
+    const dVal = encodeDrones();
+    if (dVal) sp.set("d", dVal);
+    writeParams(sp);
   }
 
   function buildGrid() {
@@ -67,6 +113,7 @@
           const s = parseInt(cell.dataset.step, 10);
           sequences[id][s] = !sequences[id][s];
           cell.classList.toggle("active", sequences[id][s]);
+          updateURL();
         });
         row.appendChild(cell);
         cellMap[track.id].push(cell);
@@ -229,10 +276,12 @@
   bpmInput.addEventListener("input", () => {
     bpm = clampNumber(parseInt(bpmInput.value || "120", 10), 40, 220);
     bpmSlider.value = String(bpm);
+    updateURL();
   });
   bpmSlider.addEventListener("input", () => {
     bpm = clampNumber(parseInt(bpmSlider.value || "120", 10), 40, 220);
     bpmInput.value = String(bpm);
+    updateURL();
   });
 
   playToggle.addEventListener("click", () => {
@@ -241,6 +290,7 @@
       playing = true;
       playToggle.textContent = "Stop";
       currentStep = -1;
+      startArmedDrones();
       tick();
       scheduleLoop();
     } else {
@@ -295,12 +345,11 @@
       currentStep = currentStep % steps;
       setCurrentIndicator(currentStep);
     }
+    updateURL();
   }
 
   stepsInput.addEventListener("input", () => setSteps(stepsInput.value || "16"));
   stepsSlider.addEventListener("input", () => setSteps(stepsSlider.value || "16"));
-
-  buildGrid();
 
   /* Drones */
   const DRONE_NOTES = [
@@ -312,8 +361,13 @@
     { name: "G4", f: 392.00 }, { name: "A4", f: 440.00 }, { name: "B4", f: 493.88 },
     { name: "C5", f: 523.25 }
   ];
+  const WAVE_TO_IDX = { "sine": 0, "triangle": 1, "square": 2, "sawtooth": 3 };
+  const IDX_TO_WAVE = ["sine", "triangle", "square", "sawtooth"];
 
   const droneNodes = {}; // id -> { osc, gain, active }
+  const droneDesired = {}; // id -> boolean
+  const droneToggles = {}; // id -> button
+  let dronesReady = false;
 
   document.querySelectorAll(".drone").forEach((droneEl, idx) => {
     const id = String(droneEl.dataset.id || idx + 1);
@@ -321,6 +375,8 @@
     const noteSel = droneEl.querySelector(".drone-note");
     const waveSel = droneEl.querySelector(".drone-wave");
     const vol = droneEl.querySelector(".drone-vol");
+    droneDesired[id] = false;
+    droneToggles[id] = toggleBtn;
 
     DRONE_NOTES.forEach(n => {
       const opt = document.createElement("option");
@@ -361,21 +417,121 @@
     }
 
     toggleBtn.addEventListener("click", () => {
-      if (!droneNodes[id]?.active) startDrone();
-      else stopDrone();
+      if (!droneNodes[id]?.active) {
+        startDrone();
+        droneDesired[id] = true;
+      } else {
+        stopDrone();
+        droneDesired[id] = false;
+      }
+      updateURL();
     });
 
     noteSel.addEventListener("change", () => {
       const node = droneNodes[id];
       if (node?.active) node.osc.frequency.setValueAtTime(parseFloat(noteSel.value), ctx.currentTime);
+      updateURL();
     });
     waveSel.addEventListener("change", () => {
       const node = droneNodes[id];
       if (node?.active) node.osc.type = waveSel.value;
+      updateURL();
     });
     vol.addEventListener("input", () => {
       const node = droneNodes[id];
       if (node?.active) node.gain.gain.setTargetAtTime(parseFloat(vol.value), ctx.currentTime, 0.05);
+      updateURL();
     });
   });
+  dronesReady = true;
+
+  function startArmedDrones() {
+    Object.keys(droneToggles).forEach(id => {
+      if (droneDesired[id] && !droneNodes[id]?.active) {
+        droneToggles[id].click();
+      }
+    });
+  }
+
+  function encodeDrones() {
+    if (!dronesReady) return "";
+    const parts = [];
+    document.querySelectorAll(".drone").forEach((droneEl, idx) => {
+      const id = String(droneEl.dataset.id || idx + 1);
+      const noteSel = droneEl.querySelector(".drone-note");
+      const waveSel = droneEl.querySelector(".drone-wave");
+      const vol = droneEl.querySelector(".drone-vol");
+      const a = droneDesired[id] ? 1 : 0;
+      const w = WAVE_TO_IDX[waveSel.value] ?? 0;
+      const freq = parseFloat(noteSel.value);
+      let n = 0;
+      let bestErr = Infinity;
+      for (let i = 0; i < DRONE_NOTES.length; i++) {
+        const err = Math.abs(DRONE_NOTES[i].f - freq);
+        if (err < bestErr) { bestErr = err; n = i; }
+      }
+      const v = Math.max(0, Math.min(100, Math.round(parseFloat(vol.value) * 100)));
+      parts.push([a, w, n, v].join("-"));
+    });
+    return parts.join(".");
+  }
+
+  function decodeDrones(str) {
+    if (!str) return;
+    const groups = str.split(".");
+    document.querySelectorAll(".drone").forEach((droneEl, idx) => {
+      const id = String(droneEl.dataset.id || idx + 1);
+      const toggleBtn = droneEl.querySelector(".drone-toggle");
+      const noteSel = droneEl.querySelector(".drone-note");
+      const waveSel = droneEl.querySelector(".drone-wave");
+      const vol = droneEl.querySelector(".drone-vol");
+      const g = groups[idx] || "";
+      const [aStr, wStr, nStr, vStr] = g.split("-");
+      const a = parseInt(aStr || "0", 10) === 1;
+      const w = Math.max(0, Math.min(3, parseInt(wStr || "0", 10) || 0));
+      const n = Math.max(0, Math.min(DRONE_NOTES.length - 1, parseInt(nStr || "12", 10) || 12));
+      const v = Math.max(0, Math.min(100, parseInt(vStr || "50", 10) || 50));
+      waveSel.value = IDX_TO_WAVE[w];
+      noteSel.value = String(DRONE_NOTES[n].f);
+      vol.value = String(v / 100);
+      droneDesired[id] = a;
+      if (!a && droneNodes[id]?.active) {
+        toggleBtn.click();
+      }
+    });
+  }
+
+  function loadFromURL() {
+    const sp = readParams();
+    const sParam = sp.get("s");
+    const bParam = sp.get("b");
+    const pParam = sp.get("p");
+    const dParam = sp.get("d");
+
+    if (sParam) setSteps(sParam);
+    else buildGrid();
+
+    if (bParam) {
+      bpm = clampNumber(parseInt(bParam, 10), 40, 220);
+      bpmInput.value = String(bpm);
+      bpmSlider.value = String(bpm);
+    }
+
+    if (pParam) {
+      const parts = pParam.split("-");
+      for (let i = 0; i < TRACK_IDS.length; i++) {
+        const hex = parts[i] || "";
+        sequences[TRACK_IDS[i]] = hexToSequence(hex, steps);
+      }
+      buildGrid();
+    }
+
+    if (dParam) {
+      decodeDrones(dParam);
+    }
+
+    updateURL();
+  }
+
+  loadFromURL();
 })();
