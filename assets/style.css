@@ -170,6 +170,7 @@ button.primary:hover { background: #3f65e6; }
 .drone .vol input[type="range"] { width: 100%; }
 
 /* Beep instruments */
+.beep-actions { display: flex; gap: 0.5rem; align-items: center; }
 .instruments-list {
   display: grid;
   grid-template-columns: 1fr;
@@ -177,9 +178,10 @@ button.primary:hover { background: #3f65e6; }
 }
 .inst {
   display: grid;
-  grid-template-columns: 90px 120px 120px 140px 1fr;
+  grid-template-columns: 90px 120px 120px 140px 1fr auto;
   gap: 0.6rem;
   align-items: center;
 }
 .inst-label { font-weight: 600; }
 .inst select, .inst input[type="range"] { width: 100%; }
+.inst .remove-btn { justify-self: end; }
