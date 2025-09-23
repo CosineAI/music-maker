@@ -10,10 +10,13 @@
     { id: "kick", name: "Kick" },
     { id: "snare", name: "Snare" },
     { id: "hat", name: "Hat" },
+    { id: "beep1", name: "Beep 1" },
+    { id: "beep2", name: "Beep 2" },
     { id: "blip", name: "Blip" },
     { id: "sample", name: "Sample" },
   ];
   const TRACK_IDS = tracks.map(t => t.id);
+  const BEEP_IDS = ["beep1", "beep2", "blip"];
 
   let steps = 16;
   let bpm = 120;
@@ -81,6 +84,8 @@
     sp.set("b", String(bpm));
     sp.set("s", String(steps));
     sp.set("p", sequencesToHexList().join("-"));
+    const iVal = encodeInstruments();
+    if (iVal) sp.set("i", iVal);
     const dVal = encodeDrones();
     if (dVal) sp.set("d", dVal);
     writeParams(sp);
@@ -160,7 +165,9 @@
       case "kick": return playKick(when);
       case "snare": return playSnare(when);
       case "hat": return playHat(when);
-      case "blip": return playBlip(when);
+      case "beep1": return playBeep("beep1", when);
+      case "beep2": return playBeep("beep2", when);
+      case "blip": return playBeep("blip", when);
       case "sample": return playSample(when);
     }
   }
@@ -273,6 +280,153 @@
     src.start(when);
   }
 
+  // Beep instruments
+  const VOICE_TO_IDX = { "blip": 0, "pluck": 1, "chime": 2, "fm": 3 };
+  const IDX_TO_VOICE = ["blip", "pluck", "chime", "fm"];
+  const beepInst = Object.fromEntries(BEEP_IDS.map(id => [id, { voice: "blip", wave: "square", freq: 659.25, vol: 0.35 }]));
+  // Default per instrument
+  beepInst["beep1"].freq = 440.0; // A4
+  beepInst["beep2"].freq = 329.63; // E4
+  beepInst["blip"].freq = 659.25; // E5 ~ original blip
+
+  function playBeep(id, when) {
+    const inst = beepInst[id];
+    if (!inst) return;
+    switch (inst.voice) {
+      case "blip": return playBeepBlip(inst, when);
+      case "pluck": return playBeepPluck(inst, when);
+      case "chime": return playBeepChime(inst, when);
+      case "fm": return playBeepFM(inst, when);
+      default: return playBeepBlip(inst, when);
+    }
+  }
+
+  function playBeepBlip(inst, when) {
+    const osc = ctx.createOscillator();
+    osc.type = inst.wave;
+    osc.frequency.setValueAtTime(inst.freq, when);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(Math.max(0.001, inst.vol), when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.12);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.14);
+  }
+
+  function playBeepPluck(inst, when) {
+    const osc = ctx.createOscillator();
+    osc.type = inst.wave;
+    osc.frequency.setValueAtTime(inst.freq, when);
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(inst.freq * 2.5, when);
+    lp.Q.value = 0.8;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(Math.max(0.001, inst.vol), when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.22);
+    osc.connect(lp);
+    lp.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.25);
+  }
+
+  function playBeepChime(inst, when) {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(inst.freq, when);
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(inst.freq, when);
+    bp.Q.value = 8;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(Math.max(0.001, inst.vol), when);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + 0.6);
+    osc.connect(bp);
+    bp.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + 0.62);
+  }
+
+  function playBeepFM(inst, when) {
+    const carrier = ctx.createOscillator();
+    carrier.type = "sine";
+    carrier.frequency.setValueAtTime(inst.freq, when);
+
+    const mod = ctx.createOscillator();
+    mod.type = "sine";
+    mod.frequency.setValueAtTime(inst.freq * 2, when);
+
+    const modGain = ctx.createGain();
+    modGain.gain.value = inst.freq * 0.25; // modulation index
+
+    const outGain = ctx.createGain();
+    outGain.gain.setValueAtTime(Math.max(0.001, inst.vol), when);
+    outGain.gain.exponentialRampToValueAtTime(0.001, when + 0.35);
+
+    mod.connect(modGain);
+    modGain.connect(carrier.frequency);
+    carrier.connect(outGain);
+    outGain.connect(master);
+
+    mod.start(when);
+    carrier.start(when);
+    mod.stop(when + 0.4);
+    carrier.stop(when + 0.4);
+  }
+
+  function nearestNoteIndex(freq) {
+    let idx = 0, best = Infinity;
+    for (let i = 0; i < DRONE_NOTES.length; i++) {
+      const err = Math.abs(DRONE_NOTES[i].f - freq);
+      if (err < best) { best = err; idx = i; }
+    }
+    return idx;
+  }
+
+  function encodeInstruments() {
+    const parts = [];
+    BEEP_IDS.forEach(id => {
+      const inst = beepInst[id];
+      const v = VOICE_TO_IDX[inst.voice] ?? 0;
+      const w = WAVE_TO_IDX[inst.wave] ?? 2;
+      const n = nearestNoteIndex(inst.freq);
+      const vol = Math.max(0, Math.min(100, Math.round(inst.vol * 100)));
+      parts.push([v, w, n, vol].join("-"));
+    });
+    return parts.join(".");
+  }
+
+  function decodeInstruments(str) {
+    if (!str) return;
+    const groups = str.split(".");
+    document.querySelectorAll(".inst").forEach(instEl => {
+      const id = String(instEl.dataset.id);
+      const voiceSel = instEl.querySelector(".inst-voice");
+      const waveSel = instEl.querySelector(".inst-wave");
+      const noteSel = instEl.querySelector(".inst-note");
+      const vol = instEl.querySelector(".inst-vol");
+      const g = groups[BEEP_IDS.indexOf(id)] || "";
+      const [vStr, wStr, nStr, volStr] = g.split("-");
+      const v = Math.max(0, Math.min(3, parseInt(vStr || "0", 10) || 0));
+      const w = Math.max(0, Math.min(3, parseInt(wStr || "2", 10) || 2));
+      const n = Math.max(0, Math.min(DRONE_NOTES.length - 1, parseInt(nStr || "0", 10) || 0));
+      const p = Math.max(0, Math.min(100, parseInt(volStr || "35", 10) || 35));
+
+      voiceSel.value = IDX_TO_VOICE[v];
+      waveSel.value = IDX_TO_WAVE[w];
+      noteSel.value = String(DRONE_NOTES[n].f);
+      vol.value = String(p / 100);
+
+      beepInst[id].voice = voiceSel.value;
+      beepInst[id].wave = waveSel.value;
+      beepInst[id].freq = parseFloat(noteSel.value);
+      beepInst[id].vol = parseFloat(vol.value);
+    });
+  }
+
   bpmInput.addEventListener("input", () => {
     bpm = clampNumber(parseInt(bpmInput.value || "120", 10), 40, 220);
     bpmSlider.value = String(bpm);
@@ -374,6 +528,55 @@
   const DRONE_NOTES = buildDroneNotes();
   const WAVE_TO_IDX = { "sine": 0, "triangle": 1, "square": 2, "sawtooth": 3 };
   const IDX_TO_WAVE = ["sine", "triangle", "square", "sawtooth"];
+
+  // Beep instruments UI
+  document.querySelectorAll(".inst").forEach(instEl => {
+    const id = String(instEl.dataset.id);
+    const voiceSel = instEl.querySelector(".inst-voice");
+    const waveSel = instEl.querySelector(".inst-wave");
+    const noteSel = instEl.querySelector(".inst-note");
+    const vol = instEl.querySelector(".inst-vol");
+
+    // Populate notes
+    DRONE_NOTES.forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = String(n.f);
+      opt.textContent = `${n.name} (${n.f.toFixed(2)} Hz)`;
+      noteSel.appendChild(opt);
+    });
+
+    // Set defaults based on id
+    const target = id === "beep1" ? 440.0 : id === "beep2" ? 329.63 : 659.25;
+    let di = 0, best = Infinity;
+    for (let i = 0; i < DRONE_NOTES.length; i++) {
+      const err = Math.abs(DRONE_NOTES[i].f - target);
+      if (err < best) { best = err; di = i; }
+    }
+    voiceSel.value = beepInst[id].voice;
+    waveSel.value = beepInst[id].wave;
+    noteSel.value = String(DRONE_NOTES[di].f);
+    vol.value = String(beepInst[id].vol);
+
+    // Sync model
+    beepInst[id].freq = parseFloat(noteSel.value);
+
+    voiceSel.addEventListener("change", () => {
+      beepInst[id].voice = voiceSel.value;
+      updateURL();
+    });
+    waveSel.addEventListener("change", () => {
+      beepInst[id].wave = waveSel.value;
+      updateURL();
+    });
+    noteSel.addEventListener("change", () => {
+      beepInst[id].freq = parseFloat(noteSel.value);
+      updateURL();
+    });
+    vol.addEventListener("input", () => {
+      beepInst[id].vol = parseFloat(vol.value);
+      updateURL();
+    });
+  });
 
   const droneNodes = {}; // id -> { osc, gain, active }
   const droneDesired = {}; // id -> boolean
@@ -525,6 +728,7 @@
     const sParam = sp.get("s");
     const bParam = sp.get("b");
     const pParam = sp.get("p");
+    const iParam = sp.get("i");
     const dParam = sp.get("d");
 
     if (sParam) setSteps(sParam);
@@ -543,6 +747,10 @@
         sequences[TRACK_IDS[i]] = hexToSequence(hex, steps);
       }
       buildGrid();
+    }
+
+    if (iParam) {
+      decodeInstruments(iParam);
     }
 
     if (dParam) {

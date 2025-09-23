@@ -167,3 +167,18 @@ button.primary:hover { background: #3f65e6; }
   width: 100%;
 }
 .drone .vol input[type="range"] { width: 100%; }
+
+/* Beep instruments */
+.instruments-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+.inst {
+  display: grid;
+  grid-template-columns: 90px 120px 120px 140px 1fr;
+  gap: 0.6rem;
+  align-items: center;
+}
+.inst-label { font-weight: 600; }
+.inst select, .inst input[type="range"] { width: 100%; }

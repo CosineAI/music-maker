@@ -37,7 +37,103 @@
     <section id="sequencer">
       <h2>Sequencer</h2>
       <div id="grid" class="grid"></div>
-      <div class="legend muted">Tracks: Kick, Snare, Hat, Blip, Sample • steps configurable</div>
+      <div class="legend muted">Tracks: Kick, Snare, Hat, Beep 1, Beep 2, Blip, Sample • steps configurable</div>
+    </section>
+
+    <section id="instruments">
+      <h2>Beep Instruments</h2>
+      <div class="instruments-list">
+        <div class="inst" data-id="beep1">
+          <span class="inst-label">Beep 1</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+
+        <div class="inst" data-id="beep2">
+          <span class="inst-label">Beep 2</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.30">
+          </label>
+        </div>
+
+        <div class="inst" data-id="blip">
+          <span class="inst-label">Blip</span>
+          <label>
+            Voice
+            <select class="inst-voice">
+              <option value="blip">blip</option>
+              <option value="pluck">pluck</option>
+              <option value="chime">chime</option>
+              <option value="fm">fm</option>
+            </select>
+          </label>
+          <label>
+            Wave
+            <select class="inst-wave">
+              <option value="sine">sine</option>
+              <option value="triangle">triangle</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+            </select>
+          </label>
+          <label>
+            Note
+            <select class="inst-note"></select>
+          </label>
+          <label class="vol">
+            Volume
+            <input class="inst-vol" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+      </div>
+      <div class="legend muted">Beep tracks use the sequencer. Set their voice, wave, note, and volume here.</div>
     </section>
 
     <section id="drones">
