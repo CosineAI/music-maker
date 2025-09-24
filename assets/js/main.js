@@ -17,6 +17,7 @@ import { setupDrones } from "./ui/drones.js";
 /* DOM */
 const gridEl = document.getElementById("grid");
 const randomFillBtn = document.getElementById("randomFill");
+const clearGridBtn = document.getElementById("clearGrid");
 const playToggle = document.getElementById("playToggle");
 const bpmInput = document.getElementById("bpmInput");
 const bpmSlider = document.getElementById("bpmSlider");
@@ -175,6 +176,19 @@ if (randomFillBtn) randomFillBtn.addEventListener("click", () => {
     }
     chosen.forEach((i) => { arr[i] = true; });
     sequences[id] = arr;
+  });
+  gridApi.buildGrid();
+  if (playing) {
+    gridApi.clearCurrentIndicators();
+    gridApi.setCurrentIndicator(currentStep);
+  }
+  updateURL();
+});
+if (clearGridBtn) clearGridBtn.addEventListener("click", () => {
+  syncSequencesWithTracks(sequences, tracks, steps);
+  const ids = TRACK_IDS();
+  ids.forEach((id) => {
+    sequences[id] = Array(steps).fill(false);
   });
   gridApi.buildGrid();
   if (playing) {
