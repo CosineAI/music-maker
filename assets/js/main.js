@@ -165,7 +165,7 @@ if (addBeepBtn) addBeepBtn.addEventListener("click", () => {
 });
 if (randomFillBtn) randomFillBtn.addEventListener("click", () => {
   syncSequencesWithTracks(sequences, tracks, steps);
-  const ids = TRACK_IDS();
+  const ids = TRACK_IDS().filter(id => id !== "sample");
   const maxCount = Math.max(1, Math.round(steps * 0.5));
   ids.forEach((id) => {
     const count = Math.floor(Math.random() * (maxCount + 1));
