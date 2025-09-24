@@ -8,7 +8,15 @@
 </head>
 <body>
   <main>
-    <button id="themeToggle" class="theme-toggle" aria-pressed="false" title="Toggle dark mode">Dark</button>
+    <div class="theme-control">
+      <label for="themeSelect" class="visually-hidden">Theme</label>
+      <select id="themeSelect" class="theme-select" aria-label="Theme">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="outrunner">Outrunner</option>
+        <option value="vaporwave">Vaporwave</option>
+      </select>
+    </div>
     <h1 style="margin-top:0;">Music Toy</h1>
 
     <section class="controls">

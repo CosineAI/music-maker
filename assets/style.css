@@ -339,3 +339,175 @@ body.dark input[type="range"]::-moz-range-thumb {
 
 /* Component-specific dark tweaks */
 body.dark .sample-upload .file { background: #202636; }
+
+/* Theme selector */
+.theme-control {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.theme-select {
+  appearance: none;
+  border: 1px solid #d7dcef;
+  background: #e8ecf7;
+  color: #222;
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  font-size: 0.9rem;
+}
+.theme-select:hover { background: #dfe4f4; }
+.theme-select:focus {
+  border-color: #4b74ff;
+  box-shadow: 0 0 0 2px rgba(75,116,255,0.15);
+}
+
+/* Outrunner theme — purples, dark blues, orange accents */
+body.theme-outrunner {
+  background: linear-gradient(120deg, #0b1020 65%, #1a1033 100%);
+  color: #eef2ff;
+}
+body.theme-outrunner main {
+  background: #0e1324;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+body.theme-outrunner footer {
+  background: #10162b;
+  color: #e7ebf4;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
+}
+body.theme-outrunner .muted { color: #b5bed3; }
+
+body.theme-outrunner button {
+  background: #251e3e;
+  color: #e7ebf4;
+}
+body.theme-outrunner button:hover { background: #312754; }
+body.theme-outrunner button.primary { background: #ff7a00; color: #fff; }
+body.theme-outrunner button.primary:hover { background: #e76b00; }
+
+body.theme-outrunner .grid .cell {
+  background: #141a2b;
+  border-color: #2f374a;
+}
+body.theme-outrunner .cell.active {
+  background: #ff7a00;
+  border-color: #e76b00;
+  box-shadow: 0 0 0 2px rgba(255,122,0,0.35) inset;
+}
+body.theme-outrunner .cell.is-current {
+  outline: 2px solid #ffc27a;
+  outline-offset: -2px;
+}
+
+/* Inputs in Outrunner */
+body.theme-outrunner input[type="text"],
+body.theme-outrunner input[type="number"],
+body.theme-outrunner input[type="email"],
+body.theme-outrunner input[type="file"],
+body.theme-outrunner select,
+body.theme-outrunner textarea {
+  background: #131924;
+  border-color: #2f374a;
+  color: #e7ebf4;
+}
+body.theme-outrunner select:focus,
+body.theme-outrunner input[type="text"]:focus,
+body.theme-outrunner input[type="number"]:focus,
+body.theme-outrunner input[type="email"]:focus,
+body.theme-outrunner textarea:focus {
+  border-color: #ff9b43;
+  box-shadow: 0 0 0 2px rgba(255,155,67,0.25);
+}
+body.theme-outrunner input[type="range"]::-webkit-slider-runnable-track { background: #2f374a; }
+body.theme-outrunner input[type="range"]::-webkit-slider-thumb {
+  background: #ff7a00;
+  border: 2px solid #ffc27a;
+}
+body.theme-outrunner input[type="range"]::-moz-range-track { background: #2f374a; }
+body.theme-outrunner input[type="range"]::-moz-range-thumb {
+  background: #ff7a00;
+  border: 2px solid #ffc27a;
+}
+body.theme-outrunner .sample-upload .file { background: #202636; }
+
+/* Vaporwave theme — pinks and teal accents */
+body.theme-vaporwave {
+  background: linear-gradient(120deg, #ffa6c6 60%, #00dcc3 100%);
+  color: #1b1430;
+}
+body.theme-vaporwave main {
+  background: #ffffff;
+  box-shadow: 0 10px 40px rgba(167,1,94,0.25), 0 4px 16px rgba(0,220,195,0.15);
+}
+body.theme-vaporwave footer {
+  background: #ffeaf2;
+  color: #1b1430;
+  box-shadow: 0 -2px 12px rgba(167,1,94,0.2);
+}
+body.theme-vaporwave .muted { color: #6b5a88; }
+
+body.theme-vaporwave button {
+  background: #ffe0ec;
+  color: #1b1430;
+}
+body.theme-vaporwave button:hover { background: #ffd3e4; }
+body.theme-vaporwave button.primary { background: #a7015e; color: #fff; }
+body.theme-vaporwave button.primary:hover { background: #91014f; }
+
+body.theme-vaporwave .grid .cell {
+  background: #fff3f8;
+  border-color: #ffd3e4;
+}
+body.theme-vaporwave .cell.active {
+  background: #a7015e;
+  border-color: #91014f;
+  box-shadow: 0 0 0 2px rgba(167,1,94,0.25) inset;
+}
+body.theme-vaporwave .cell.is-current {
+  outline: 2px solid #00dcc3;
+  outline-offset: -2px;
+}
+
+/* Inputs in Vaporwave */
+body.theme-vaporwave input[type="text"],
+body.theme-vaporwave input[type="number"],
+body.theme-vaporwave input[type="email"],
+body.theme-vaporwave input[type="file"],
+body.theme-vaporwave select,
+body.theme-vaporwave textarea {
+  background: #fff5f8;
+  border-color: #ffd3e4;
+  color: #1b1430;
+}
+body.theme-vaporwave select:focus,
+body.theme-vaporwave input[type="text"]:focus,
+body.theme-vaporwave input[type="number"]:focus,
+body.theme-vaporwave input[type="email"]:focus,
+body.theme-vaporwave textarea:focus {
+  border-color: #00dcc3;
+  box-shadow: 0 0 0 2px rgba(0,220,195,0.25);
+}
+body.theme-vaporwave input[type="range"]::-webkit-slider-runnable-track { background: #ffd3e4; }
+body.theme-vaporwave input[type="range"]::-webkit-slider-thumb {
+  background: #00dcc3;
+  border: 2px solid #b6fff4;
+}
+body.theme-vaporwave input[type="range"]::-moz-range-track { background: #ffd3e4; }
+body.theme-vaporwave input[type="range"]::-moz-range-thumb {
+  background: #00dcc3;
+  border: 2px solid #b6fff4;
+}
+body.theme-vaporwave .sample-upload .file { background: #ffeaf2; }
