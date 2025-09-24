@@ -183,10 +183,14 @@ export function playBeep(inst, when) {
   }
 }
 
-export function triggerTrack(id, when, beepInst, sampleBuffer) {
+export function triggerTrack(id, when, beepInst, samples) {
   if (id === "kick") return playKick(when);
   if (id === "snare") return playSnare(when);
   if (id === "hat") return playHat(when);
-  if (id === "sample") return playSample(sampleBuffer, when);
+  if (id === "sample" || id.startsWith("sample")) {
+    const buf = samples && samples[id];
+    if (buf) return playSample(buf, when);
+    return;
+  }
   if (beepInst && beepInst[id]) return playBeep(beepInst[id], when);
 }

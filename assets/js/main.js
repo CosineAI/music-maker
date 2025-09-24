@@ -34,7 +34,6 @@ let bpm = 120;
 let playing = false;
 let currentStep = -1;
 let timer = null;
-let sampleBuffer = null;
 
 let sequences = {};
 let tracks = [];
@@ -44,6 +43,10 @@ function setDefaultBeepInst(id) { beepInst[id] = { voice: "blip", wave: "square"
 setDefaultBeepInst("beep1"); beepInst["beep1"].freq = 440.0;
 setDefaultBeepInst("beep2"); beepInst["beep2"].freq = 329.63; beepInst["beep2"].vol = 0.30;
 setDefaultBeepInst("blip");  beepInst["blip"].freq = 659.25;
+
+let sampleIds = ["sample"];
+const samples = {};
+samples["sample"] = null;
 
 let currentTheme = "light";
 
@@ -69,12 +72,19 @@ const drones = setupDrones(document, DRONE_NOTES, ctx, master, ensureContext, ()
 
 /* Instruments */
 function onBeepChannelsChanged() {
-  tracks = rebuildTracks(beepIds);
+  tracks = rebuildTracks(beepIds, sampleIds);
   syncSequencesWithTracks(sequences, tracks, steps);
   gridApi.buildGrid();
   buildInstrumentList(instrumentsListEl, beepIds, beepInst, DRONE_NOTES, nearestNoteIndex, () => updateURL(), (id) => {
     removeBeepChannel(id, beepIds, beepInst, sequences, onBeepChannelsChanged);
   });
+  updateURL();
+}
+
+function onSampleTracksChanged() {
+  tracks = rebuildTracks(beepIds, sampleIds);
+  syncSequencesWithTracks(sequences, tracks, steps);
+  gridApi.buildGrid();
   updateURL();
 }
 
@@ -89,7 +99,7 @@ function tick() {
   gridApi.setCurrentIndicator(currentStep);
 
   const when = ctx.currentTime + 0.01;
-  tracks.forEach(t => { if (sequences[t.id]?.[currentStep]) triggerTrack(t.id, when, beepInst, sampleBuffer); });
+  tracks.forEach(t => { if (sequences[t.id]?.[currentStep]) triggerTrack(t.id, when, beepInst, samples); });
 }
 
 /* Controls */
@@ -121,16 +131,31 @@ playToggle.addEventListener("click", () => {
 });
 
 sampleFile.addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const fileList = e.target.files;
+  const files = fileList ? Array.from(fileList) : [];
+  if (files.length === 0) return;
   ensureContext();
-  const arr = await file.arrayBuffer();
   try {
-    const buf = await ctx.decodeAudioData(arr);
-    sampleBuffer = buf;
-    sampleStatus.textContent = `Loaded: ${file.name}`;
+    const decoded = await Promise.all(files.map(async (f) => {
+      const arr = await f.arrayBuffer();
+      const buf = await ctx.decodeAudioData(arr);
+      return { name: f.name, buffer: buf };
+    }));
+    const newIds = decoded.map((_, i) => (i === 0 ? "sample" : `sample${i + 1}`));
+    Object.keys(samples).forEach((k) => { if (!newIds.includes(k)) delete samples[k]; });
+    sampleIds = newIds;
+    decoded.forEach((item, i) => {
+      const id = newIds[i];
+      samples[id] = item.buffer;
+    });
+    if (decoded.length === 1) {
+      sampleStatus.textContent = `Loaded: ${decoded[0].name}`;
+    } else {
+      sampleStatus.textContent = `Loaded ${decoded.length} samples`;
+    }
+    onSampleTracksChanged();
   } catch {
-    sampleStatus.textContent = "Failed to decode sample";
+    sampleStatus.textContent = "Failed to decode sample(s)";
   }
 });
 
@@ -177,7 +202,7 @@ function updateURL() {
 }
 
 function loadFromURL() {
-  tracks = rebuildTracks(beepIds);
+  tracks = rebuildTracks(beepIds, sampleIds);
   syncSequencesWithTracks(sequences, tracks, steps);
   gridApi.buildGrid();
   buildInstrumentList(instrumentsListEl, beepIds, beepInst, DRONE_NOTES, nearestNoteIndex, () => updateURL(), (id) => {

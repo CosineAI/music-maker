@@ -4,13 +4,19 @@ export function beepLabel(id) {
   return Number.isFinite(n) ? `Beep ${n}` : "Beep";
 }
 
-export function rebuildTracks(beepIds) {
+export function sampleLabel(id) {
+  if (id === "sample") return "Sample";
+  const n = parseInt(id.replace("sample", ""), 10);
+  return Number.isFinite(n) ? `Sample ${n}` : "Sample";
+}
+
+export function rebuildTracks(beepIds, sampleIds = ["sample"]) {
   return [
     { id: "kick", name: "Kick" },
     { id: "snare", name: "Snare" },
     { id: "hat", name: "Hat" },
     ...beepIds.map(id => ({ id, name: beepLabel(id) })),
-    { id: "sample", name: "Sample" },
+    ...(sampleIds && sampleIds.length ? sampleIds.map(id => ({ id, name: sampleLabel(id) })) : [{ id: "sample", name: "Sample" }]),
   ];
 }
 
