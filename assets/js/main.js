@@ -23,6 +23,7 @@ const stepsInput = document.getElementById("stepsInput");
 const stepsSlider = document.getElementById("stepsSlider");
 const sampleFile = document.getElementById("sampleFile");
 const sampleStatus = document.getElementById("sampleStatus");
+const recordBtn = document.getElementById("recordBtn");
 const instrumentsListEl = document.getElementById("instrumentsList");
 const addBeepBtn = document.getElementById("addBeep");
 const themeToggle = document.getElementById("themeToggle");
@@ -35,6 +36,10 @@ let playing = false;
 let currentStep = -1;
 let timer = null;
 let sampleBuffer = null;
+let mediaRecorder = null;
+let micStream = null;
+let recordChunks = [];
+let recording = false;
 
 let sequences = {};
 let tracks = [];
@@ -131,6 +136,62 @@ sampleFile.addEventListener("change", async (e) => {
     sampleStatus.textContent = `Loaded: ${file.name}`;
   } catch {
     sampleStatus.textContent = "Failed to decode sample";
+  }
+});
+
+/* Recording */
+function formatSeconds(sec) {
+  if (!Number.isFinite(sec)) return "0.0";
+  return (Math.round(sec * 10) / 10).toFixed(1);
+}
+
+if (recordBtn) recordBtn.addEventListener("click", async () => {
+  ensureContext();
+  const supportsRecording = "MediaRecorder" in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  if (!supportsRecording) {
+    sampleStatus.textContent = "Recording not supported in this browser";
+    return;
+  }
+
+  try {
+    if (!recording) {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordChunks = [];
+      mediaRecorder = new MediaRecorder(micStream);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) recordChunks.push(e.data);
+      };
+      mediaRecorder.onstop = async () => {
+        try {
+          const blob = new Blob(recordChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+          const arr = await blob.arrayBuffer();
+          const buf = await ctx.decodeAudioData(arr);
+          sampleBuffer = buf;
+          sampleStatus.textContent = `Recorded sample (${formatSeconds(buf.duration)}s)`;
+        } catch {
+          sampleStatus.textContent = "Failed to decode recording";
+        } finally {
+          try { if (micStream) micStream.getTracks().forEach(t => t.stop()); } catch {}
+          micStream = null;
+          mediaRecorder = null;
+          recording = false;
+          if (recordBtn) recordBtn.textContent = "Record sample";
+        }
+      };
+      mediaRecorder.start();
+      recording = true;
+      sampleStatus.textContent = "Recording…";
+      recordBtn.textContent = "Stop recording";
+    } else {
+      mediaRecorder?.stop();
+    }
+  } catch (err) {
+    sampleStatus.textContent = "Mic error";
+    recording = false;
+    try { if (micStream) micStream.getTracks().forEach(t => t.stop()); } catch {}
+    mediaRecorder = null;
+    micStream = null;
+    if (recordBtn) recordBtn.textContent = "Record sample";
   }
 });
 

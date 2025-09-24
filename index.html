@@ -35,10 +35,13 @@
       </div>
 
       <div class="sample-upload">
-        <label class="file">
-          <span>Upload sample</span>
-          <input id="sampleFile" type="file" accept="audio/*">
-        </label>
+        <div class="sample-actions" style="display:inline-flex; align-items:center; gap:0.6rem;">
+          <label class="file">
+            <span>Upload sample</span>
+            <input id="sampleFile" type="file" accept="audio/*">
+          </label>
+          <button id="recordBtn">Record sample</button>
+        </div>
         <span id="sampleStatus" class="muted">No sample</span>
       </div>
     </section>
