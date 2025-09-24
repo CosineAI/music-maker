@@ -16,6 +16,7 @@ import { setupDrones } from "./ui/drones.js";
 
 /* DOM */
 const gridEl = document.getElementById("grid");
+const randomFillBtn = document.getElementById("randomFill");
 const playToggle = document.getElementById("playToggle");
 const bpmInput = document.getElementById("bpmInput");
 const bpmSlider = document.getElementById("bpmSlider");
@@ -160,6 +161,27 @@ stepsSlider.addEventListener("input", () => setSteps(stepsSlider.value || "16"))
 
 if (addBeepBtn) addBeepBtn.addEventListener("click", () => {
   addBeepChannel(beepIds, beepInst, 220, onBeepChannelsChanged);
+});
+if (randomFillBtn) randomFillBtn.addEventListener("click", () => {
+  syncSequencesWithTracks(sequences, tracks, steps);
+  const ids = TRACK_IDS();
+  const maxCount = Math.max(1, Math.round(steps * 0.5));
+  ids.forEach((id) => {
+    const count = Math.floor(Math.random() * (maxCount + 1));
+    const arr = Array(steps).fill(false);
+    const chosen = new Set();
+    while (chosen.size < count) {
+      chosen.add(Math.floor(Math.random() * steps));
+    }
+    chosen.forEach((i) => { arr[i] = true; });
+    sequences[id] = arr;
+  });
+  gridApi.buildGrid();
+  if (playing) {
+    gridApi.clearCurrentIndicators();
+    gridApi.setCurrentIndicator(currentStep);
+  }
+  updateURL();
 });
 
 /* URL */

@@ -125,6 +125,7 @@ button.primary:hover { background: #3f65e6; }
   display: grid;
   gap: 0.5rem;
 }
+.grid-actions { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
 .row {
   display: grid;
   grid-template-columns: 110px repeat(16, 1fr);
