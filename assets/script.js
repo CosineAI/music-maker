@@ -170,7 +170,8 @@
     tracks.forEach(track => {
       const row = document.createElement("div");
       row.className = "row";
-      row.style.gridTemplateColumns = `110px repeat(${steps}, 1fr)`;
+      // Ensure a minimum width per step so mobile can scroll horizontally
+      row.style.gridTemplateColumns = `minmax(92px, 110px) repeat(${steps}, minmax(28px, 1fr))`;
 
       const label = document.createElement("div");
       label.className = "track-label";
