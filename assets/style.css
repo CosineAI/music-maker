@@ -474,9 +474,9 @@ body.theme-vaporwave .grid .cell {
   border-color: #ffd3e4;
 }
 body.theme-vaporwave .cell.active {
-  background: #a7015e;
-  border-color: #91014f;
-  box-shadow: 0 0 0 2px rgba(167,1,94,0.25) inset;
+  background: #00dcc3;
+  border-color: #00c7b2;
+  box-shadow: 0 0 0 2px rgba(0,220,195,0.25) inset;
 }
 body.theme-vaporwave .cell.is-current {
   outline: 2px solid #00dcc3;
