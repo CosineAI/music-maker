@@ -23,10 +23,60 @@
   const sampleStatus = document.getElementById("sampleStatus");
   const instrumentsListEl = document.getElementById("instrumentsList");
   const addBeepBtn = document.getElementById("addBeep");
+  const themeToggle = document.getElementById("themeToggle");
+  const themeSelect = document.getElementById("themeSelect");
 
   function ensureContext() { if (ctx.state !== "running") ctx.resume(); }
   function clampNumber(n, min, max) { return Math.max(min, Math.min(max, isNaN(n) ? min : n)); }
   function stepMs() { return (60000 / bpm) / 4; }
+
+  // Theme handling
+  let currentTheme = "light";
+  function applyTheme(mode) {
+    currentTheme = mode;
+    document.body.classList.remove("dark", "theme-outrunner", "theme-vaporwave");
+    if (mode === "dark") document.body.classList.add("dark");
+    else if (mode === "outrunner") document.body.classList.add("theme-outrunner");
+    else if (mode === "vaporwave") document.body.classList.add("theme-vaporwave");
+    // Reflect UI controls
+    if (themeSelect) themeSelect.value = mode;
+    if (themeToggle) {
+      const isDark = mode === "dark";
+      themeToggle.textContent = isDark ? "Light" : "Dark";
+      themeToggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+    }
+  }
+  function initTheme() {
+    let mode = "light";
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light" || saved === "outrunner" || saved === "vaporwave") {
+        mode = saved;
+      } else {
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        mode = prefersDark ? "dark" : "light";
+      }
+    } catch {}
+    applyTheme(mode);
+  }
+  initTheme();
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const next = document.body.classList.contains("dark") ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("theme", next); } catch {}
+      updateURL();
+    });
+  }
+  if (themeSelect) {
+    themeSelect.addEventListener("change", () => {
+      const mode = themeSelect.value || "light";
+      applyTheme(mode);
+      try { localStorage.setItem("theme", mode); } catch {}
+      updateURL();
+    });
+  }
 
   // Track and sequence state
   const sequences = {};
@@ -102,6 +152,7 @@
     if (iVal) sp.set("i", iVal);
     const dVal = encodeDrones();
     if (dVal) sp.set("d", dVal);
+    sp.set("t", currentTheme);
     writeParams(sp);
   }
 
@@ -119,7 +170,8 @@
     tracks.forEach(track => {
       const row = document.createElement("div");
       row.className = "row";
-      row.style.gridTemplateColumns = `110px repeat(${steps}, 1fr)`;
+      // Ensure a minimum width per step so mobile can scroll horizontally
+      row.style.gridTemplateColumns = `minmax(92px, 110px) repeat(${steps}, minmax(28px, 1fr))`;
 
       const label = document.createElement("div");
       label.className = "track-label";
@@ -807,9 +859,11 @@
     const pParam = sp.get("p");
     const iParam = sp.get("i");
     const dParam = sp.get("d");
+    const tParam = sp.get("t");
 
     if (iParam) decodeInstruments(iParam);
     if (sParam) setSteps(sParam);
+    if (tParam) applyTheme(tParam);
 
     // Sync sequences with (potentially) new tracks/steps before applying patterns
     syncSequencesWithTracks();
