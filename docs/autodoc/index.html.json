@@ -1,0 +1,364 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [
+        { "type": "text", "text": "Application Shell & UI Markup (" },
+        { "type": "text", "text": "index.html", "marks": [{ "type": "code" }] },
+        { "type": "text", "text": ")" }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Overview" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "This single-page HTML defines the full UI frame for the Music Toy app. It establishes key sections, element IDs, and classes that the JavaScript logic binds to. Reviewing this file clarifies the DOM structure and the hooks used by the app for interactivity."
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Theme selector (light/dark/outrunner/vaporwave)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Transport controls (Play, BPM, Steps; both numeric inputs and sliders)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Sample upload + status" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Sequencer grid container" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Instrument channel controls (add channel, list container)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Drone controls (multiple drone blocks)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Footer" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Script and style includes" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "DOM Map (Key Elements)" }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": "json" },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"theme\": { \"select#themeSelect\": [\"light\", \"dark\", \"outrunner\", \"vaporwave\"] },\n  \"transport\": {\n    \"button#playToggle\": \"Play/Stop\",\n    \"input#bpmInput[type=number]\": {\"min\": 40, \"max\": 220, \"step\": 1, \"value\": 120},\n    \"input#bpmSlider[type=range]\": {\"min\": 40, \"max\": 220, \"step\": 1, \"value\": 120},\n    \"input#stepsInput[type=number]\": {\"min\": 4, \"max\": 32, \"step\": 1, \"value\": 16},\n    \"input#stepsSlider[type=range]\": {\"min\": 4, \"max\": 32, \"step\": 1, \"value\": 16}\n  },\n  \"sampleUpload\": {\n    \"input#sampleFile[type=file]\": \"accept=audio/*\",\n    \"span#sampleStatus\": \"No sample\"\n  },\n  \"sequencer\": {\n    \"div#grid.grid\": \"Sequencer grid container\"\n  },\n  \"instruments\": {\n    \"button#addBeep\": \"Add Beep/Blip Channel\",\n    \"div#instrumentsList.instruments-list\": \"Instrument channels container\"\n  },\n  \"drones\": [\n    {\n      \"div.drone[data-id=1]\": {\n        \"button.drone-toggle\": \"Start/Stop\",\n        \"select.drone-note\": \"Note selector (options populated by script)\",\n        \"select.drone-wave\": [\"sine\", \"triangle\", \"square\", \"sawtooth\"],\n        \"input.drone-vol[type=range]\": {\"min\": 0, \"max\": 1, \"step\": 0.01, \"value\": 0.5}\n      }\n    },\n    {\n      \"div.drone[data-id=2]\": {\n        \"button.drone-toggle\": \"Start/Stop\",\n        \"select.drone-note\": \"Note selector\",\n        \"select.drone-wave\": [\"sine\", \"triangle\", \"square\", \"sawtooth\"],\n        \"input.drone-vol[type=range]\": {\"min\": 0, \"max\": 1, \"step\": 0.01, \"value\": 0.4}\n      }\n    },\n    {\n      \"div.drone[data-id=3]\": {\n        \"button.drone-toggle\": \"Start/Stop\",\n        \"select.drone-note\": \"Note selector\",\n        \"select.drone-wave\": [\"sine\", \"triangle\", \"square\", \"sawtooth\"],\n        \"input.drone-vol[type=range]\": {\"min\": 0, \"max\": 1, \"step\": 0.01, \"value\": 0.3}\n      }\n    }\n  ],\n  \"footer\": { \"p\": \"© 2025 Your Name\" },\n  \"includes\": {\n    \"link[href=assets/style.css]\": \"stylesheet\",\n    \"script[type=module][src=assets/js/main.js]\": \"application logic\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Quick-Start" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "To preview or test the UI markup locally:" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Open " },
+                { "type": "text", "text": "index.html", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " in any modern browser." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Confirm styles load from " },
+                { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": "." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [{ "type": "text", "text": "Interact with Play, BPM and Steps controls; toggle the theme." }]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [{ "type": "text", "text": "Use Sample upload and observe status text updating." }]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [{ "type": "text", "text": "Add instruments, adjust drones, and observe changes in the grid." }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Key Concepts / Responsibilities" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Theme Control", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "select#themeSelect toggles CSS theme classes/variables; options include Light, Dark, Outrunner, Vaporwave." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Transport Controls", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "Play toggle; BPM and Steps have both numeric inputs and synced range sliders." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Sample Upload", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "input#sampleFile (accept=audio/*) and span#sampleStatus for feedback." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Sequencer Grid", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "div#grid is the container for dynamic step cells generated by scripts." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Instrument Controls", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "button#addBeep adds channels; div#instrumentsList holds channel controls." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Drone Controls", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "Each .drone has Start/Stop, Note select, Wave select (sine/triangle/square/sawtooth), and Volume slider." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Script/Style Includes", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "Loads " },
+                { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " for styling and " },
+                { "type": "text", "text": "assets/js/main.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " (type=module) for interactive behavior." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Usage Examples" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Common queries from " },
+        { "type": "text", "text": "assets/js/main.js", "marks": [{ "type": "code" }] },
+        { "type": "text", "text": ":" }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "document.getElementById('playToggle').addEventListener('click', ...);\nconst bpmInput = document.getElementById('bpmInput');\nconst bpmSlider = document.getElementById('bpmSlider');\nconst stepsInput = document.getElementById('stepsInput');\nconst stepsSlider = document.getElementById('stepsSlider');\nconst grid = document.getElementById('grid');\nconst themeSelect = document.getElementById('themeSelect');\nconst droneToggles = document.querySelectorAll('.drone-toggle');"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Adding a new instrument channel might involve:" }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "document.getElementById('addBeep').addEventListener('click', addInstrumentChannel);"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Updating the sequencer grid:" }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "function renderGrid(steps, tracks) {\n  const grid = document.getElementById('grid');\n  // populate grid based on app state\n}"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Dependencies & Interactions" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Primary dependencies", "marks": [{ "type": "bold" }] }, { "type": "text", "text": ": Vanilla JS in assets/js/main.js; CSS in assets/style.css." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Interaction pattern", "marks": [{ "type": "bold" }] }, { "type": "text", "text": ": Scripts query elements by ID/class, attach event listeners, and render dynamic children into containers (grid, instrumentsList)." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Idiosyncrasies", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": ": " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "Element IDs/classes are critical; avoid renaming without updating queries." }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "Theme switching relies on select#themeSelect." }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "Grid and instruments sections host dynamic children rendered by JS." }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Further Reading / Related Docs" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Application logic and event handlers: " }, { "type": "text", "text": "assets/js/main.js", "marks": [{ "type": "code" }] }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Styles, themes, and visual layout: " }, { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Project overview and usage: " }, { "type": "text", "text": "README.md", "marks": [{ "type": "code" }] }] }
+          ]
+        }
+      ]
+    }
+  ]
+}
