@@ -1,0 +1,662 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [
+        { "type": "text", "text": "Transport, BPM, Steps & Playback Loop (" },
+        { "type": "text", "text": "assets/js/main.js", "marks": [{ "type": "code" }] },
+        { "type": "text", "text": ")" }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Overview" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This module wires up the step-sequencer’s transport, timing, UI, URL-sync, instruments, and drones. It coordinates:" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Play/Stop transport and scheduling loop." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "BPM and step count management with clamping and live UI sync." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Grid current-step indicators and step advancement." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Track triggering (beep/sample) on active steps." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Drone channels, armed/start/stop in sync with transport." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Deep-linking: serialize/restore BPM, steps, sequences, instruments, drones, and theme to URL." }] }]
+        }
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Quick-Start" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Open " },
+                { "type": "text", "text": "index.html", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " in your browser." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Set BPM (40–220) and Steps (4–32) via inputs or sliders." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Click \"Play\" to start; click again to stop." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Optionally upload an audio sample via " },
+                { "type": "text", "text": "Sample File", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " (decoded with AudioContext.decodeAudioData)." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Add/remove beep channels to extend the palette; the grid and instrument list rebuild automatically." }] }]
+        }
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Key Concepts / Responsibilities" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Transport Control", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": "  " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "The " },
+                        { "type": "text", "text": "playToggle", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " click handler toggles transport, updates button text, resets " },
+                        { "type": "text", "text": "currentStep", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": ", and starts/stops drones." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Ensures audio context is running via " },
+                        { "type": "text", "text": "ensureContext()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " before playback." }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "BPM & Steps Management", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": "  " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "BPM inputs clamp to 40–220; steps clamp to 4–32. Inputs and sliders mirror each other." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Step length calculated by " },
+                        { "type": "text", "text": "stepMs()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " = (60000 / bpm) / 4 (16th-note resolution)." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Changing steps resizes sequences, rebuilds grid, and keeps current-step indicator aligned." }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Tick Scheduling & Playback Loop", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": "  " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "The loop uses " },
+                        { "type": "text", "text": "setTimeout", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " to schedule each step based on " },
+                        { "type": "text", "text": "stepMs()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": "." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Each " },
+                        { "type": "text", "text": "tick()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " clears previous indicators, advances " },
+                        { "type": "text", "text": "currentStep", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": ", sets the new indicator, and triggers active tracks." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Track triggering is sample-accurate relative to " },
+                        { "type": "text", "text": "ctx.currentTime", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " using a small lookahead offset." }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Instruments & Channels", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": "  " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Default beep channels: " },
+                        { "type": "text", "text": "[\"beep1\",\"beep2\",\"blip\"]", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " with per-channel voice/wave/freq/vol settings." }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "UI list is rebuilt on channel changes; sequences and grid are kept in sync." }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "State Sync & Deep-Linking", "marks": [{ "type": "bold" }] },
+                { "type": "text", "text": "  " }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "URL parameters written by " },
+                        { "type": "text", "text": "updateURL()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " and read by " },
+                        { "type": "text", "text": "loadFromURL()", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": ":" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "b", "marks": [{ "type": "code" }] },
+                        { "type": "text", "text": " = BPM (int, 40–220)" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "s", "marks": [{ "type": "code" }] }, { "type": "text", "text": " = steps (int, 4–32)" }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "p", "marks": [{ "type": "code" }] }, { "type": "text", "text": " = packed sequences, per-track hex joined with '-'" }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "i", "marks": [{ "type": "code" }] }, { "type": "text", "text": " = encoded instrument settings" }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "d", "marks": [{ "type": "code" }] }, { "type": "text", "text": " = encoded drones" }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    { "type": "paragraph", "content": [{ "type": "text", "text": "t", "marks": [{ "type": "code" }] }, { "type": "text", "text": " = theme (\"light\" | \"dark\")" }] }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Loading order ensures instruments/channels and steps are applied before sequences; theme is applied immediately if present." }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Usage Examples" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Start Playback", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [{ "type": "text", "text": "playToggle.click(); // Starts sequencer, starts drones, schedules loop" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Set BPM", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [{ "type": "text", "text": "bpmInput.value = \"100\";\nbpmInput.dispatchEvent(new Event(\"input\")); // clamps 40–220, mirrors slider, writes URL" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Set Step Count", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [{ "type": "text", "text": "stepsInput.value = \"24\";\nstepsInput.dispatchEvent(new Event(\"input\")); // resizes sequences and rebuilds grid" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Main Playback Loop", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "function scheduleLoop() {\n  if (!playing) return;\n  timer = setTimeout(() => { tick(); scheduleLoop(); }, stepMs());\n}\nfunction tick() {\n  gridApi.clearCurrentIndicators();\n  currentStep = (currentStep + 1) % steps;\n  gridApi.setCurrentIndicator(currentStep);\n  const when = ctx.currentTime + 0.01;\n  tracks.forEach(t => { if (sequences[t.id]?.[currentStep]) triggerTrack(t.id, when, beepInst, sampleBuffer); });\n}"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Sync State with URL", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "function updateURL() {\n  const sp = new URLSearchParams();\n  sp.set(\"b\", String(bpm));\n  sp.set(\"s\", String(steps));\n  sp.set(\"p\", sequencesToHexList(TRACK_IDS(), sequences, steps).join(\"-\"));\n  const iVal = encodeInstruments(beepIds, beepInst, DRONE_NOTES, nearestNoteIndex);\n  if (iVal) sp.set(\"i\", iVal);\n  const dVal = drones.encodeDrones();\n  if (dVal) sp.set(\"d\", dVal);\n  sp.set(\"t\", currentTheme);\n  writeParams(sp);\n}"
+        }
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Dependencies & Interactions" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This module coordinates the following components:" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/lib/audio.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Audio context management, master bus, " },
+                { "type": "text", "text": "triggerTrack()", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " for playback." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/lib/notes.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Drone note definitions and helpers." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/lib/url.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Reading/writing URL parameters and packing/unpacking sequence hex." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/lib/tracks.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Rebuild beep tracks and keep sequences aligned to track list and step count." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/ui/grid.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Grid creation, rebuild, and current-step indicators." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/ui/instruments.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Instrument list UI, encoding/decoding, and beep channel management." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "assets/js/ui/drones.js", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": ": Drone setup, encode/decode, and start/stop with transport." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "DOM elements: Controls, sliders, grids, instrument lists, file input, theme toggles." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Idiosyncrasies", "marks": [{ "type": "bold" }] }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "State changes mirror in both input and slider controls and always write to URL." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Grid clears previous-step highlight before setting the new one on every tick." }] }]
+        },
+        {
+          "type": "listItem",
+          "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Adding/removing beep channels triggers full track/sequence/grid/instrument rebuild." }] }]
+        }
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Further Reading / Related Docs" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/lib/audio.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Core audio context, track triggering." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/lib/notes.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Note definitions for drones and helpers." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/lib/url.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — URL parameter encoding/decoding." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/lib/tracks.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Track rebuilding and sequence syncing." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/ui/grid.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Grid API for UI step indicators." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/ui/instruments.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Instrument list and channel management." }] }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "assets/js/ui/drones.js", "marks": [{ "type": "code" }] }, { "type": "text", "text": " — Drone setup and control logic." }] }
+          ]
+        }
+      ]
+    }
+  ]
+}
