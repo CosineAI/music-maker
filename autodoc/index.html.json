@@ -1,0 +1,333 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [
+        { "type": "text", "text": "Application Shell & UI Markup (" },
+        { "type": "text", "text": "index.html", "marks": [{ "type": "code" }] },
+        { "type": "text", "text": ")" }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Overview" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Single-page HTML scaffold defining the Music Toy UI. It provides the DOM structure, element IDs/classes, and containers that app scripts attach to. Major regions include:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Theme control (select)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Transport controls (Play/Stop, BPM, Steps)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Sample upload (file input + status label)" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Sequencer grid container" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Beep instruments list and add button" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Drones section with three default drones" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Footer" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Key Elements (IDs / Classes)" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "marks": [{ "type": "bold" }], "text": "Theme" }, { "type": "text", "text": ": " }, { "type": "text", "marks": [{ "type": "code" }], "text": "themeSelect" }, { "type": "text", "text": " (select with options light, dark, outrunner, vaporwave)" }] }] },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Transport" },
+                { "type": "text", "text": ": " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "playToggle" },
+                { "type": "text", "text": ", " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "bpmInput" },
+                { "type": "text", "text": ", " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "bpmSlider" },
+                { "type": "text", "text": ", " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "stepsInput" },
+                { "type": "text", "text": ", " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "stepsSlider" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Sample Upload" },
+                { "type": "text", "text": ": " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "sampleFile" },
+                { "type": "text", "text": " (file input), " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "sampleStatus" },
+                { "type": "text", "text": " (status span)" }
+              ]
+            }
+          ]
+        },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "marks": [{ "type": "bold" }], "text": "Sequencer" }, { "type": "text", "text": ": " }, { "type": "text", "marks": [{ "type": "code" }], "text": "grid" }, { "type": "text", "text": " container" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "marks": [{ "type": "bold" }], "text": "Instruments" }, { "type": "text", "text": ": " }, { "type": "text", "marks": [{ "type": "code" }], "text": "instrumentsList" }, { "type": "text", "text": " (list), " }, { "type": "text", "marks": [{ "type": "code" }], "text": "addBeep" }, { "type": "text", "text": " (button)" }] }] },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Drones" },
+                { "type": "text", "text": ": each drone has " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "drone-toggle" },
+                { "type": "text", "text": " (button), " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "drone-note" },
+                { "type": "text", "text": " (select), " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "drone-wave" },
+                { "type": "text", "text": " (select), " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "drone-vol" },
+                { "type": "text", "text": " (range input)" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Quick-Start" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Open " },
+                { "type": "text", "text": "index.html", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " in a modern browser. No build step is required." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Ensure styles load from " },
+                { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Interact with transport, grid, instruments, drones, and theme controls." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Script/Style Includes" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "CSS: " },
+                { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "JS: " },
+                { "type": "text", "text": "<script type=\"module\" src=\"assets/js/main.js\">", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " (ES modules)" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Typical Script Queries (assets/js/main.js)" }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [
+        {
+          "type": "text",
+          "text": "const gridEl = document.getElementById('grid');\nconst playToggle = document.getElementById('playToggle');\nconst bpmInput = document.getElementById('bpmInput');\nconst bpmSlider = document.getElementById('bpmSlider');\nconst stepsInput = document.getElementById('stepsInput');\nconst stepsSlider = document.getElementById('stepsSlider');\nconst sampleFile = document.getElementById('sampleFile');\nconst sampleStatus = document.getElementById('sampleStatus');\nconst instrumentsListEl = document.getElementById('instrumentsList');\nconst addBeepBtn = document.getElementById('addBeep');\nconst themeSelect = document.getElementById('themeSelect');"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Responsibilities & Interactions" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Theme Control" },
+                { "type": "text", "text": ": uses " },
+                { "type": "text", "text": "setupTheme", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " to apply and persist " },
+                { "type": "text", "text": "light/dark/outrunner/vaporwave", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " via URL param " },
+                { "type": "text", "text": "t", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Transport" },
+                { "type": "text", "text": ": Play/Stop loop, BPM ↔ " },
+                { "type": "text", "text": "b", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " URL param; Steps ↔ " },
+                { "type": "text", "text": "s", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Sample Upload" },
+                { "type": "text", "text": ": decodes user-provided audio and updates " },
+                { "type": "text", "text": "sampleStatus", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Sequencer Grid" },
+                { "type": "text", "text": ": " },
+                { "type": "text", "text": "createGrid", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " renders grid; sequences encoded in URL as " },
+                { "type": "text", "text": "p", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Instruments" },
+                { "type": "text", "text": ": beep/blip channels list; add via " },
+                { "type": "text", "text": "addBeep", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " button; config encoded at URL param " },
+                { "type": "text", "text": "i", "marks": [{ "type": "code" }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Drones" },
+                { "type": "text", "text": ": three default drone rows; state encoded as " },
+                { "type": "text", "text": "d", "marks": [{ "type": "code" }] },
+                { "type": "text", "text": " URL param" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Idiosyncrasies" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Relies on exact IDs/classes (changing markup can break selectors)." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Uses ES modules; ensure browsers support " }, { "type": "text", "text": "type=\"module\"", "marks": [{ "type": "code" }] }, { "type": "text", "text": " script." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Theme options include two extended palettes: " }, { "type": "text", "text": "outrunner", "marks": [{ "type": "code" }] }, { "type": "text", "text": " and " }, { "type": "text", "text": "vaporwave", "marks": [{ "type": "code" }] }, { "type": "text", "text": "." }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Further Reading / Related Docs" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Application logic and event handlers: " }, { "type": "text", "text": "assets/js/main.js", "marks": [{ "type": "code" }] }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "UI modules: " }, { "type": "text", "text": "assets/js/ui/*.js", "marks": [{ "type": "code" }] }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Audio/theme/url helpers: " }, { "type": "text", "text": "assets/js/lib/*.js", "marks": [{ "type": "code" }] }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Styles, themes, and layout: " }, { "type": "text", "text": "assets/style.css", "marks": [{ "type": "code" }] }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Project overview: " }, { "type": "text", "text": "README.md", "marks": [{ "type": "code" }] }] }] }
+      ]
+    }
+  ]
+}
